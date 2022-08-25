@@ -45,5 +45,5 @@ jobs:
       - name: Deploy to Github Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{secrets.NRRD_SEGMENTATION_TOKEN}}
+          github_token: ${{secrets.NRRD_SEGEMENTAION_TOOL}}
           publish_dir: ./build
