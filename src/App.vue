@@ -52,11 +52,7 @@ onMounted(() => {
   appRenderer.sceneInfos[0].addSubView();
 
   gui = appRenderer.sceneInfos[0].gui;
-  loadNrrd(
-    "/Nrrd-Segmentation/nrrd/breast-224.nrrd",
-    "nrrd0",
-    appRenderer.sceneInfos[0]
-  );
+  loadNrrd("/nrrd/breast-224.nrrd", "nrrd0", appRenderer.sceneInfos[0]);
   setupGui();
   appRenderer.animate();
 });
@@ -70,7 +66,7 @@ function loadNrrd(url: string, name: string, sceneIn: Copper.copperMScene) {
     /**
      * for test 1 view
      * */
-    sceneIn.loadViewUrl("/Nrrd-Segmentation/nrrd_view.json");
+    sceneIn.loadViewUrl("/nrrd_view.json");
     sceneIn.subScene.add(nrrdMesh.z);
     sceneIn.dragImage(nrrdSlices.z, {
       mode: "mode1",
@@ -83,10 +79,10 @@ function loadNrrd(url: string, name: string, sceneIn: Copper.copperMScene) {
   };
   if (sceneIn) {
     sceneIn?.loadNrrd(url, funa);
-    sceneIn.loadViewUrl("/Nrrd-Segmentation/nrrd_view.json");
+    sceneIn.loadViewUrl("/nrrd_view.json");
   }
   sceneIn.updateBackground("#18e5a7", "#ff00ff");
-  Copper.setHDRFilePath("/Nrrd-Segmentation/venice_sunset_1k.hdr");
+  Copper.setHDRFilePath("/venice_sunset_1k.hdr");
   appRenderer.updateEnvironment(sceneIn);
 }
 
