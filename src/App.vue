@@ -75,10 +75,7 @@ function loadNrrd(url: string, name: string, sceneIn: Copper.copperMScene) {
       mode: "mode1",
       showNumber: true,
     });
-    appRenderer.sceneInfos[0].drawImage(
-      nrrdSlices.z,
-      appRenderer.sceneInfos[0]
-    );
+    sceneIn.drawImage(nrrdSlices.z, sceneIn);
   };
   if (sceneIn) {
     sceneIn?.loadNrrd(url, funa);
