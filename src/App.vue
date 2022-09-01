@@ -1,15 +1,9 @@
 <template>
   <div id="bg" ref="base_container">
     <div class="intro" ref="intro">
-      <h3>Introduction</h3>
-      <p>
-        <strong>--> Zoom:</strong> When your mouse hover on slice image, then
-        use mouse wheel to zoom image.
-      </p>
-      <p>
-        <strong>--> Pan: </strong> When your mouse hover on slice image, and use
-        mouse right click on image, then drag image to pan.
-      </p>
+      <h3>How to use:</h3>
+      <p><strong>--> Zoom:</strong> Use mouse wheel.</p>
+      <p><strong>--> Pan: </strong> Use mouse right click + drag image.</p>
       <p>
         <strong>--> Switch slice:</strong> press shift on your keyboard (do not
         release it when you switch slice), then use mouse left click the image
@@ -90,9 +84,12 @@ function setupGui() {
   const state = {
     introduction: true,
   };
-  gui.add(state, "introduction").onChange((flag) => {
-    flag ? (intro.style.display = "flex") : (intro.style.display = "none");
-  });
+  gui
+    .add(state, "introduction")
+    .name("Intro Panel")
+    .onChange((flag) => {
+      flag ? (intro.style.display = "flex") : (intro.style.display = "none");
+    });
 }
 </script>
 
@@ -123,7 +120,7 @@ function setupGui() {
 .intro {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  /* justify-content: center; */
   align-items: center;
   position: fixed;
   left: 30px;
@@ -141,6 +138,7 @@ h3 {
 }
 p {
   /* color: darkcyan; */
-  color: #d94607;
+  color: #bbe70e;
+  width: 100%;
 }
 </style>
