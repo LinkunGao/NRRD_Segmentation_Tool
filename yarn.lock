@@ -175,15 +175,17 @@
   "resolved" "https://registry.npmjs.org/copper3d_plugin_heartjs_config/-/copper3d_plugin_heartjs_config-1.0.7.tgz"
   "version" "1.0.7"
 
-"copper3d_visualisation@^1.9.2":
-  "integrity" "sha512-AgpsJijpMyNubLIfGD/z91jjf/l6FiAkXw58msZ5uLv6GjKsI/cVpCfHL8j5lI6MK5Lhf2FoAsgzr94y/8HoPQ=="
-  "resolved" "https://registry.npmjs.org/copper3d_visualisation/-/copper3d_visualisation-1.9.2.tgz"
-  "version" "1.9.2"
+"copper3d_visualisation@^1.10.3":
+  "integrity" "sha512-/c7O/pOpdjp2tWdfBufHCqBKu8z1Sv/5zCKpDXqFSmBIjJUMpmgumKGyfEwBDMaz8X6UQFtE5+qweEhCdqxcyQ=="
+  "resolved" "https://registry.npmjs.org/copper3d_visualisation/-/copper3d_visualisation-1.10.3.tgz"
+  "version" "1.10.3"
   dependencies:
     "@types/dat.gui" "^0.7.7"
     "@types/three" "^0.140.0"
     "copper3d_plugin_heart_k" "^1.0.14"
     "dat.gui" "^0.7.9"
+    "dicom-parser" "^1.8.13"
+    "fflate" "^0.7.3"
     "glsl-blend-soft-light" "^1.0.5"
     "glsl-film-grain" "^1.0.4"
     "three" "^0.143.0"
@@ -197,6 +199,11 @@
   "integrity" "sha512-sCNc1OHobc+Erc1HqiswYgHdVNpSJUlk/Hz8vzOCsER7rl+oF/4+v8GXFUyCgtXpoCX6+bnmg07DedLvBLwYKQ=="
   "resolved" "https://registry.npmjs.org/dat.gui/-/dat.gui-0.7.9.tgz"
   "version" "0.7.9"
+
+"dicom-parser@^1.8.13":
+  "integrity" "sha512-8M53FPHS4zM3zvu5fdIWdatqrjpiG2+2M6RJ0IxwqLF4gvCYRsqUIusxYaOiNU0sWaptUpnXeZiXunP0LOIcQw=="
+  "resolved" "https://registry.npmjs.org/dicom-parser/-/dicom-parser-1.8.13.tgz"
+  "version" "1.8.13"
 
 "esbuild-darwin-64@0.14.54":
   "integrity" "sha512-jtdKWV3nBviOd5v4hOpkVmpxsBy90CGzebpbO9beiqUYVMBtSc0AL9zGftFuBon7PNDcdvNCEuQqw2x0wP9yug=="
@@ -234,6 +241,11 @@
   "integrity" "sha512-Rfkk/Mp/DL7JVje3u18FxFujQlTNR2q6QfMSMB7AvCBx91NGj/ba3kCfza0f6dVDbw7YlRf/nDrn7pQrCCyQ/w=="
   "resolved" "https://registry.npmjs.org/estree-walker/-/estree-walker-2.0.2.tgz"
   "version" "2.0.2"
+
+"fflate@^0.7.3":
+  "integrity" "sha512-0Zz1jOzJWERhyhsimS54VTqOteCNwRtIlh8isdL0AXLo0g7xNTfTL7oWrkmCnPhZGocKIkWHBistBrrpoNH3aw=="
+  "resolved" "https://registry.npmjs.org/fflate/-/fflate-0.7.3.tgz"
+  "version" "0.7.3"
 
 "fsevents@~2.3.2":
   "integrity" "sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA=="
