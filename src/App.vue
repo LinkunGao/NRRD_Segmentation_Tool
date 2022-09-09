@@ -21,6 +21,7 @@
 import { GUI } from "dat.gui";
 import * as Copper from "copper3d_visualisation";
 import "copper3d_visualisation/dist/css/style.css";
+import { TrackballControls } from "three/examples/jsm/controls/TrackballControls";
 import { getCurrentInstance, onMounted, ref } from "vue";
 
 let refs = null;
@@ -28,6 +29,7 @@ let bg: HTMLDivElement = ref<any>(null);
 let appRenderer: Copper.copperMSceneRenderer;
 let intro: HTMLDivElement = ref<any>(null);
 let gui: GUI;
+let nrrdTools;
 
 onMounted(() => {
   console.log(
@@ -65,11 +67,22 @@ function loadNrrd(url: string, name: string, sceneIn: Copper.copperMScene) {
      * for test 1 view
      * */
     sceneIn.subScene.add(nrrdMesh.z);
-    sceneIn.dragImage(nrrdSlices.z, {
-      mode: "mode1",
-      showNumber: true,
-    });
-    sceneIn.drawImage(nrrdSlices.z, sceneIn);
+    nrrdTools = new Copper.nrrd_tools(volume, nrrdSlices.z);
+
+    nrrdTools.dragImageWithMode(
+      sceneIn.container,
+      sceneIn.controls as TrackballControls,
+      {
+        mode: "mode1",
+        showNumber: true,
+      }
+    );
+    nrrdTools.draw(
+      sceneIn.container,
+      sceneIn.controls as TrackballControls,
+      sceneIn,
+      sceneIn.gui
+    );
   };
   if (sceneIn) {
     sceneIn?.loadNrrd(url, funa);
