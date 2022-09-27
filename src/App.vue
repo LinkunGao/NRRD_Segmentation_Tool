@@ -159,14 +159,14 @@ function setupGui() {
     .onChange((flag) => {
       flag ? (intro.style.display = "flex") : (intro.style.display = "none");
     });
-  gui
-    .add(state, "contrastSize")
-    .min(100)
-    .max(400)
-    .onChange((size) => {
-      nrrdTools.setContrastSize(size, size);
-      nrrdTools.updateContrastArea();
-    });
+  // gui
+  //   .add(state, "contrastSize")
+  //   .min(100)
+  //   .max(400)
+  //   .onChange((size) => {
+  //     nrrdTools.setContrastSize(size, size);
+  //     nrrdTools.updateContrastArea();
+  //   });
 }
 </script>
 
