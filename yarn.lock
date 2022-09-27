@@ -175,10 +175,10 @@
   "resolved" "https://registry.npmjs.org/copper3d_plugin_heartjs_config/-/copper3d_plugin_heartjs_config-1.0.7.tgz"
   "version" "1.0.7"
 
-"copper3d_visualisation@^1.11.3":
-  "integrity" "sha512-iALcLLPWkHFeQpZDJwbpKxfd8v8zygYaLRXArR7jhXkW+/OHjTXVoadGk5RVSswmt/DzKC8ynyO+fhjaM01vEg=="
-  "resolved" "https://registry.npmjs.org/copper3d_visualisation/-/copper3d_visualisation-1.11.3.tgz"
-  "version" "1.11.3"
+"copper3d_visualisation@^1.11.11":
+  "integrity" "sha512-fnPHcohGEIOrY6YGlBGhskJ5YLs65tYnuqKMKRuM6BV6H/WIOoxd+3mfivDg4MxdVvu/2jE/M3xxBfvcfHnXPA=="
+  "resolved" "https://registry.npmjs.org/copper3d_visualisation/-/copper3d_visualisation-1.11.11.tgz"
+  "version" "1.11.11"
   dependencies:
     "@types/dat.gui" "^0.7.7"
     "@types/three" "^0.140.0"
