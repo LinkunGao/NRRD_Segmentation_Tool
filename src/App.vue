@@ -15,6 +15,7 @@
         using ctrl+z (windows) / command+z(mac).
       </p>
     </div>
+    <NavBar @on-slice-change="getSliceChangedNum"></NavBar>
   </div>
 </template>
 <script setup lang="ts">
@@ -22,46 +23,42 @@ import { GUI } from "dat.gui";
 import * as Copper from "copper3d_visualisation";
 import "copper3d_visualisation/dist/css/style.css";
 import { TrackballControls } from "three/examples/jsm/controls/TrackballControls";
+import NavBar from "./components/NavBar.vue";
 import { getCurrentInstance, onMounted, ref } from "vue";
 
 let refs = null;
-let bg: HTMLDivElement = ref<any>(null);
+let base_container = ref<HTMLDivElement>();
 let appRenderer: Copper.copperMSceneRenderer;
 let intro: HTMLDivElement = ref<any>(null);
 let gui: GUI;
 let nrrdTools: Copper.nrrd_tools;
 let loadBarMain: Copper.loadingBarType;
-let loadBar1: Copper.loadingBarType;
-let loadBar2: Copper.loadingBarType;
-let loadBar3: Copper.loadingBarType;
-let loadBar4: Copper.loadingBarType;
+let readyMain = ref(false);
+let readyC1 = ref(false);
+let readyC2 = ref(false);
+let readyC3 = ref(false);
+let readyC4 = ref(false);
 
 onMounted(() => {
   console.log(
-    "%cNRRD Segmentation App %cBeta:v1.2.0",
+    "%cNRRD Segmentation App %cBeta:v2.0.0",
     "padding: 3px;color:white; background:#d94607",
     "padding: 3px;color:white; background:#219EBC"
   );
 
   let { $refs } = (getCurrentInstance() as any).proxy;
   refs = $refs;
-  bg = refs.base_container;
   intro = refs.intro;
 
-  appRenderer = new Copper.copperMSceneRenderer(bg, 1);
+  appRenderer = new Copper.copperMSceneRenderer(
+    base_container.value as HTMLDivElement,
+    1
+  );
   nrrdTools = new Copper.nrrd_tools(appRenderer.sceneInfos[0].container);
-  nrrdTools.addContrastDisplay();
+  nrrdTools.setContrastDisplayInMainArea();
   loadBarMain = Copper.loading();
-  loadBar1 = Copper.loading();
-  loadBar2 = Copper.loading();
-  loadBar3 = Copper.loading();
-  loadBar4 = Copper.loading();
 
   nrrdTools.mainDisplayArea.appendChild(loadBarMain.loadingContainer);
-  nrrdTools.contrast1Area.appendChild(loadBar1.loadingContainer);
-  nrrdTools.contrast2Area.appendChild(loadBar2.loadingContainer);
-  nrrdTools.contrast3Area.appendChild(loadBar3.loadingContainer);
-  nrrdTools.contrast4Area.appendChild(loadBar4.loadingContainer);
 
   appRenderer.sceneInfos[0].addSubView();
 
@@ -78,6 +75,11 @@ onMounted(() => {
   setupGui();
   appRenderer.animate();
 });
+const getSliceChangedNum = (sliceNum: number) => {
+  if (readyMain && readyC1 && readyC2 && readyC3 && readyC4) {
+    nrrdTools.setSliceMoving(sliceNum);
+  }
+};
 
 function loadNrrd(
   urls: Array<string>,
@@ -90,12 +92,6 @@ function loadNrrd(
     nrrdSlices: Copper.nrrdSliceType
     // gui?: GUI
   ) => {
-    /**
-     * for test 1 view
-     * */
-    appRenderer.sceneInfos[0].loadViewUrl("/copper3d_examples/nrrd_view.json");
-    // appRenderer.sceneInfos[0].scene.add(nrrdMesh.z);
-
     appRenderer.sceneInfos[0].subScene.add(nrrdMesh.z);
     nrrdTools.setVolumeAndSlice(volume, nrrdSlices.z);
 
@@ -105,6 +101,7 @@ function loadNrrd(
     });
     nrrdTools.draw(sceneIn.controls as TrackballControls, sceneIn, sceneIn.gui);
     appRenderer.sceneInfos[0].addPreRenderCallbackFunction(nrrdTools.start);
+    readyMain.value = true;
   };
   const contrast1Area = (
     volume: any,
@@ -112,6 +109,7 @@ function loadNrrd(
     nrrdSlices: Copper.nrrdSliceType
   ) => {
     nrrdTools.setContrast1OriginCanvas(nrrdSlices.z);
+    readyC1.value = true;
   };
   const contrast2Area = (
     volume: any,
@@ -119,6 +117,7 @@ function loadNrrd(
     nrrdSlices: Copper.nrrdSliceType
   ) => {
     nrrdTools.setContrast2OriginCanvas(nrrdSlices.z);
+    readyC2.value = true;
   };
   const contrast3Area = (
     volume: any,
@@ -126,6 +125,7 @@ function loadNrrd(
     nrrdSlices: Copper.nrrdSliceType
   ) => {
     nrrdTools.setContrast3OriginCanvas(nrrdSlices.z);
+    readyC3.value = true;
   };
   const contrast4Area = (
     volume: any,
@@ -133,13 +133,14 @@ function loadNrrd(
     nrrdSlices: Copper.nrrdSliceType
   ) => {
     nrrdTools.setContrast4OriginCanvas(nrrdSlices.z);
+    readyC4.value = true;
   };
   if (sceneIn) {
     sceneIn?.loadNrrd(urls[0], loadBarMain, mainPreArea);
-    sceneIn?.loadNrrd(urls[1], loadBar1, contrast1Area);
-    sceneIn?.loadNrrd(urls[2], loadBar2, contrast2Area);
-    sceneIn?.loadNrrd(urls[3], loadBar3, contrast3Area);
-    sceneIn?.loadNrrd(urls[4], loadBar4, contrast4Area);
+    sceneIn?.loadNrrd(urls[1], loadBarMain, contrast1Area);
+    sceneIn?.loadNrrd(urls[2], loadBarMain, contrast2Area);
+    sceneIn?.loadNrrd(urls[3], loadBarMain, contrast3Area);
+    sceneIn?.loadNrrd(urls[4], loadBarMain, contrast4Area);
     sceneIn.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view.json");
   }
   sceneIn.updateBackground("#18e5a7", "#ff00ff");
@@ -188,39 +189,13 @@ function setupGui() {
   padding: 5px;
   color: crimson;
 }
+
 .copper3D_scene_div {
-  display: grid;
-  grid-template-areas:
-    "z z m m m"
-    "c1 c2 m m m"
-    "c1 c2 m m m"
-    "c1 c2 m m m"
-    "c3 c4 m m m"
-    "c3 c4 m m m"
-    "c3 c4 m m m"
-    "b b m m m";
-  gap: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
-.copper3D_mainDisplay {
-  position: relative;
-  grid-area: m;
-}
-.copper3D_contrast1 {
-  grid-area: c1;
-  background-color: rgba(130, 39, 39, 0.1);
-}
-.copper3D_contrast2 {
-  grid-area: c2;
-  background-color: rgba(102, 51, 153, 0.3);
-}
-.copper3D_contrast3 {
-  grid-area: c3;
-  background-color: rgba(126, 60, 60, 0.3);
-}
-.copper3D_contrast4 {
-  grid-area: c4;
-  background-color: rgba(45, 192, 19, 0.3);
-}
+
 .intro {
   display: flex;
   flex-direction: column;
