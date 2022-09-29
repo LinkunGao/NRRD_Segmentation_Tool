@@ -41,7 +41,7 @@ let readyC4 = ref(false);
 
 onMounted(() => {
   console.log(
-    "%cNRRD Segmentation App %cBeta:v2.0.0",
+    "%cNRRD Segmentation App %cBeta:v2.0.3",
     "padding: 3px;color:white; background:#d94607",
     "padding: 3px;color:white; background:#219EBC"
   );
@@ -174,6 +174,7 @@ function setupGui() {
 #bg {
   width: 100vw;
   height: 100vh;
+  overflow: hidden;
   /* border: 1px solid palevioletred; */
 }
 .copper3d_sliceNumber {
