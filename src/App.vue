@@ -174,6 +174,7 @@ function setupGui() {
 #bg {
   width: 100vw;
   height: 100vh;
+  overflow: hidden;
   /* border: 1px solid palevioletred; */
 }
 .copper3d_sliceNumber {
