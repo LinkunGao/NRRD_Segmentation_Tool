@@ -12,7 +12,7 @@
       </p>
       <p>
         <strong> --> Undo:</strong> 1. In GUI click undo; or 2. on keyborad
-        using ctrl+z (windows) / command+z(mac).
+        using ctrl+z (windows) / command+z (mac).
       </p>
     </div>
     <NavBar @on-slice-change="getSliceChangedNum"></NavBar>
@@ -187,7 +187,19 @@ function setupGui() {
   border: 1px solid salmon;
   border-radius: 10px;
   padding: 5px;
-  color: crimson;
+  /* color: crimson; */
+  font-size: 0.9em;
+  font-weight: 700;
+  color: rgba(26, 26, 26, 0.965);
+  cursor: no-drop;
+  transition: border-color 0.25s;
+}
+.copper3d_sliceNumber:hover {
+  border-color: #eb4a05;
+}
+.copper3d_sliceNumber:focus,
+.copper3d_sliceNumber:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
 }
 
 .copper3D_scene_div {
@@ -212,13 +224,20 @@ function setupGui() {
   border-radius: 10px;
   z-index: 10;
 }
+.copper3D_loading_progress {
+  color: darkgray !important;
+  text-align: center;
+  width: 60vw;
+}
 
 h3 {
   color: crimson;
 }
 .intro p {
   /* color: darkcyan; */
-  color: #ef5e0a;
+  /* color: #ef5e0a; */
+  font-size: 0.8em;
+  color: darkgray;
   width: 100%;
 }
 </style>
