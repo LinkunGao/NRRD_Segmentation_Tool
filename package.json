@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "copper3d_visualisation": "^1.11.12",
+    "copper3d_visualisation": "^1.11.13",
     "vue": "^3.2.37"
   },
   "devDependencies": {
