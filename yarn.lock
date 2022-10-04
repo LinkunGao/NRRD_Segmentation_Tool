@@ -180,10 +180,10 @@ copper3d_plugin_heartjs_config@^1.0.7:
   resolved "https://registry.npmjs.org/copper3d_plugin_heartjs_config/-/copper3d_plugin_heartjs_config-1.0.7.tgz"
   integrity sha512-rWhe19DQjC7Ap96uPKmQNy+IBihXTHelAowr5VdgHee+LDTLTLJ75IHsbBxi5ls1LHMxsXhGmWmT3Oy+pgva+Q==
 
-copper3d_visualisation@^1.11.13:
-  version "1.11.13"
-  resolved "https://registry.yarnpkg.com/copper3d_visualisation/-/copper3d_visualisation-1.11.13.tgz#002a8b67d78e2ff895a93213e5609db8dce49b72"
-  integrity sha512-bWb6PHHFEp2NgMigZ5ia+9Jsdtj75u13mCnKTs7nzlz/iu4vxp+EKeDB2zXkEiC/HmDPI6AqgHYZbb55LXlI9g==
+copper3d_visualisation@^1.11.15:
+  version "1.11.15"
+  resolved "https://registry.yarnpkg.com/copper3d_visualisation/-/copper3d_visualisation-1.11.15.tgz#ff4d1e5bc882209578861f5866d58b237e7fa8f0"
+  integrity sha512-YMH+Tz9PZuENT9NHZmy29nw9AgTHvaDpuCEQL4Oa+u2W8O0UqW/wQsknluU9CrP+7hgB9mncN0YvSVUQ1KWnrA==
   dependencies:
     "@types/dat.gui" "^0.7.7"
     "@types/three" "^0.140.0"
@@ -476,7 +476,7 @@ supports-preserve-symlinks-flag@^1.0.0:
 
 three@^0.144.0:
   version "0.144.0"
-  resolved "https://registry.yarnpkg.com/three/-/three-0.144.0.tgz#2818517169f8ff94eea5f664f6ff1fcdcd436cc8"
+  resolved "https://registry.npmjs.org/three/-/three-0.144.0.tgz"
   integrity sha512-R8AXPuqfjfRJKkYoTQcTK7A6i3AdO9++2n8ubya/GTU+fEHhYKu1ZooRSCPkx69jbnzT7dD/xEo6eROQTt2lJw==
 
 typescript@^4.6.4:
