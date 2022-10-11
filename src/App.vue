@@ -65,6 +65,7 @@ let readyC4 = ref(false);
 onMounted(() => {
   console.log(
     "%cNRRD Segmentation App %cBeta:v2.1.0",
+
     "padding: 3px;color:white; background:#d94607",
     "padding: 3px;color:white; background:#219EBC"
   );
