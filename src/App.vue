@@ -5,17 +5,29 @@
       <p><strong>--> Zoom:</strong> Use mouse wheel.</p>
       <p><strong>--> Pan: </strong> Use mouse right click + drag image.</p>
       <p>
-        <strong>--> Switch slice:</strong> press shift on your keyboard (do not
-        release it when you switch slice), then use mouse left click the image
-        to drag up and down. When the switch is made to the image you want, you
-        can release the shift key.
+        <strong>--> Switch slice:</strong> Use mouse left click + drag image.
+      </p>
+      <p>
+        <strong>--> Painting:</strong> Press `shift` key on your keyboard (don't
+        release it), then use mouse left click to paint.
       </p>
       <p>
         <strong> --> Undo:</strong> 1. In GUI click undo; or 2. on keyborad
         using ctrl+z (windows) / command+z (mac).
       </p>
     </div>
-    <NavBar @on-slice-change="getSliceChangedNum"></NavBar>
+    <div ref="c_gui" id="gui"></div>
+    <div ref="nrrd_c" class="nrrd_c"></div>
+    <NavBar
+      :file-num="5"
+      :max="max"
+      :immediate-slice-num="immediateSliceNum"
+      :contrast-index="contrastNum"
+      @on-slice-change="getSliceChangedNum"
+      @redraw-pre="redraw"
+      @reset-main-area-size="resetMainAreaSize"
+      @on-change-orientation="resetSlicesOrientation"
+    ></NavBar>
   </div>
 </template>
 <script setup lang="ts">
@@ -27,10 +39,21 @@ import NavBar from "./components/NavBar.vue";
 import { getCurrentInstance, onMounted, ref } from "vue";
 
 let refs = null;
+let appRenderer: Copper.copperRenderer;
+let max = ref(0);
+let immediateSliceNum = ref(0);
+let contrastNum = ref(0);
+
 let base_container = ref<HTMLDivElement>();
-let appRenderer: Copper.copperMSceneRenderer;
+
 let intro: HTMLDivElement = ref<any>(null);
-let gui: GUI;
+let scene: Copper.copperScene | undefined;
+let bg: HTMLDivElement = ref<any>(null);
+let c_gui: HTMLDivElement = ref<any>(null);
+let nrrd_c: HTMLDivElement = ref<any>(null);
+let pre_slices = ref();
+
+let gui = new GUI({ width: 300, autoPlace: false });
 let nrrdTools: Copper.nrrd_tools;
 let loadBarMain: Copper.loadingBarType;
 let readyMain = ref(false);
@@ -41,7 +64,7 @@ let readyC4 = ref(false);
 
 onMounted(() => {
   console.log(
-    "%cNRRD Segmentation App %cBeta:v2.0.4",
+    "%cNRRD Segmentation App %cBeta:v2.1.0",
     "padding: 3px;color:white; background:#d94607",
     "padding: 3px;color:white; background:#219EBC"
   );
@@ -50,19 +73,23 @@ onMounted(() => {
   refs = $refs;
   intro = refs.intro;
 
-  appRenderer = new Copper.copperMSceneRenderer(
-    base_container.value as HTMLDivElement,
-    1
-  );
-  nrrdTools = new Copper.nrrd_tools(appRenderer.sceneInfos[0].container);
-  nrrdTools.setContrastDisplayInMainArea();
+  bg = refs.base_container;
+  c_gui = $refs.c_gui;
+  nrrd_c = $refs.nrrd_c;
+  c_gui.appendChild(gui.domElement);
+  appRenderer = new Copper.copperRenderer(bg);
+  nrrdTools = new Copper.nrrd_tools(nrrd_c);
+  nrrdTools.setContrastDisplayInMainArea(5);
+  nrrdTools.setShowInMainArea(false);
   loadBarMain = Copper.loading();
-
   nrrdTools.mainDisplayArea.appendChild(loadBarMain.loadingContainer);
 
-  appRenderer.sceneInfos[0].addSubView();
+  document.addEventListener("keydown", (e) => {
+    if (e.code === "KeyF") {
+      Copper.fullScreenListenner(bg);
+    }
+  });
 
-  gui = appRenderer.sceneInfos[0].gui;
   const urls = [
     "/NRRD_Segmentation_Tool/nrrd/ax dyn pre.nrrd",
     "/NRRD_Segmentation_Tool/nrrd/ax dyn 1st pass.nrrd",
@@ -70,88 +97,128 @@ onMounted(() => {
     "/NRRD_Segmentation_Tool/nrrd/ax dyn 3rd pass.nrrd",
     "/NRRD_Segmentation_Tool/nrrd/ax dyn 4th pass.nrrd",
   ];
-  loadNrrd(urls, "nrrd0", appRenderer.sceneInfos[0]);
 
   setupGui();
+  loadNrrd(urls, "nrrd_tools");
   appRenderer.animate();
 });
+const redraw = () => {
+  nrrdTools.redrawDisplayCanvas();
+};
+
+const resetSlicesOrientation = (axis: string) => {
+  console.log(pre_slices.value);
+
+  console.log(axis);
+  switch (axis) {
+    case "x":
+      // nrrdTools.setSliceOritention([pre_slices.value.x]);
+      break;
+    case "y":
+      break;
+    case "z":
+      break;
+  }
+};
 const getSliceChangedNum = (sliceNum: number) => {
   if (readyMain && readyC1 && readyC2 && readyC3 && readyC4) {
+    // nrrdTools.setSyncsliceNum();
+    // nrrdTools.updateIndex(sliceNum);
+    // console.log(sliceNum);
+
     nrrdTools.setSliceMoving(sliceNum);
   }
 };
+const resetMainAreaSize = (factor: number) => {
+  nrrdTools.setMainAreaSize(factor);
+};
 
-function loadNrrd(
-  urls: Array<string>,
-  name: string,
-  sceneIn: Copper.copperMScene
-) {
-  const mainPreArea = (
-    volume: any,
-    nrrdMesh: Copper.nrrdMeshesType,
-    nrrdSlices: Copper.nrrdSliceType
-    // gui?: GUI
-  ) => {
-    appRenderer.sceneInfos[0].subScene.add(nrrdMesh.z);
-    nrrdTools.setVolumeAndSlice(volume, nrrdSlices.z);
+function loadNrrd(urls: Array<string>, name: string) {
+  scene = appRenderer.getSceneByName(name) as Copper.copperScene;
+  if (scene == undefined) {
+    scene = appRenderer.createScene(name) as Copper.copperScene;
+    if (scene) {
+      appRenderer.setCurrentScene(scene);
+      const mainPreArea = (
+        volume: any,
+        nrrdMesh: Copper.nrrdMeshesType,
+        nrrdSlices: Copper.nrrdSliceType
+        // gui?: GUI
+      ) => {
+        // scene?.subScene.add(nrrdMesh.z);
+        pre_slices.value = nrrdSlices;
+        nrrdTools.setVolumeAndSlice(volume, nrrdSlices.z);
+        max.value = nrrdTools.getMaxSliceNum()[0];
 
-    nrrdTools.dragImageWithMode(sceneIn.controls as TrackballControls, {
-      mode: "mode1",
-      showNumber: true,
-    });
-    nrrdTools.draw(sceneIn.controls as TrackballControls, sceneIn, sceneIn.gui);
-    appRenderer.sceneInfos[0].addPreRenderCallbackFunction(nrrdTools.start);
-    readyMain.value = true;
-  };
-  const contrast1Area = (
-    volume: any,
-    nrrdMesh: Copper.nrrdMeshesType,
-    nrrdSlices: Copper.nrrdSliceType
-  ) => {
-    nrrdTools.setContrast1OriginCanvas(nrrdSlices.z);
-    readyC1.value = true;
-  };
-  const contrast2Area = (
-    volume: any,
-    nrrdMesh: Copper.nrrdMeshesType,
-    nrrdSlices: Copper.nrrdSliceType
-  ) => {
-    nrrdTools.setContrast2OriginCanvas(nrrdSlices.z);
-    readyC2.value = true;
-  };
-  const contrast3Area = (
-    volume: any,
-    nrrdMesh: Copper.nrrdMeshesType,
-    nrrdSlices: Copper.nrrdSliceType
-  ) => {
-    nrrdTools.setContrast3OriginCanvas(nrrdSlices.z);
-    readyC3.value = true;
-  };
-  const contrast4Area = (
-    volume: any,
-    nrrdMesh: Copper.nrrdMeshesType,
-    nrrdSlices: Copper.nrrdSliceType
-  ) => {
-    nrrdTools.setContrast4OriginCanvas(nrrdSlices.z);
-    readyC4.value = true;
-  };
-  if (sceneIn) {
-    sceneIn?.loadNrrd(urls[0], loadBarMain, mainPreArea);
-    sceneIn?.loadNrrd(urls[1], loadBarMain, contrast1Area);
-    sceneIn?.loadNrrd(urls[2], loadBarMain, contrast2Area);
-    sceneIn?.loadNrrd(urls[3], loadBarMain, contrast3Area);
-    sceneIn?.loadNrrd(urls[4], loadBarMain, contrast4Area);
-    sceneIn.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view.json");
+        const getSliceNum = (index: number, contrastindex: number) => {
+          immediateSliceNum.value = index;
+          contrastNum.value = contrastindex;
+        };
+
+        nrrdTools.dragImageWithMode(scene?.controls as TrackballControls, {
+          mode: "mode1",
+          showNumber: true,
+          getSliceNum,
+        });
+        nrrdTools.draw(
+          scene?.controls as TrackballControls,
+          scene as Copper.copperScene,
+          gui
+        );
+        scene?.addPreRenderCallbackFunction(nrrdTools.start);
+        readyMain.value = true;
+      };
+      const contrast1Area = (
+        volume: any,
+        nrrdMesh: Copper.nrrdMeshesType,
+        nrrdSlices: Copper.nrrdSliceType
+      ) => {
+        nrrdTools.setContrast1OriginCanvas(nrrdSlices.z);
+        readyC1.value = true;
+      };
+      const contrast2Area = (
+        volume: any,
+        nrrdMesh: Copper.nrrdMeshesType,
+        nrrdSlices: Copper.nrrdSliceType
+      ) => {
+        nrrdTools.setContrast2OriginCanvas(nrrdSlices.z);
+        readyC2.value = true;
+      };
+      const contrast3Area = (
+        volume: any,
+        nrrdMesh: Copper.nrrdMeshesType,
+        nrrdSlices: Copper.nrrdSliceType
+      ) => {
+        nrrdTools.setContrast3OriginCanvas(nrrdSlices.z);
+        readyC3.value = true;
+      };
+      const contrast4Area = (
+        volume: any,
+        nrrdMesh: Copper.nrrdMeshesType,
+        nrrdSlices: Copper.nrrdSliceType
+      ) => {
+        nrrdTools.setContrast4OriginCanvas(nrrdSlices.z);
+        readyC4.value = true;
+      };
+
+      scene?.loadNrrd(urls[0], loadBarMain, mainPreArea);
+      scene?.loadNrrd(urls[1], loadBarMain, contrast1Area);
+      scene?.loadNrrd(urls[2], loadBarMain, contrast2Area);
+      scene?.loadNrrd(urls[3], loadBarMain, contrast3Area);
+      scene?.loadNrrd(urls[4], loadBarMain, contrast4Area);
+      scene.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view.json");
+
+      Copper.setHDRFilePath("/NRRD_Segmentation_Tool/venice_sunset_1k.hdr");
+      scene.updateBackground("#5454ad", "#18e5a7");
+    }
   }
-  sceneIn.updateBackground("#18e5a7", "#ff00ff");
-  Copper.setHDRFilePath("/NRRD_Segmentation_Tool/venice_sunset_1k.hdr");
-  appRenderer.updateEnvironment(sceneIn);
+  appRenderer.updateEnvironment();
 }
 
 function setupGui() {
   const state = {
     introduction: true,
-    contrastSize: 200,
+    showContrast: false,
   };
   gui
     .add(state, "introduction")
@@ -159,6 +226,15 @@ function setupGui() {
     .onChange((flag) => {
       flag ? (intro.style.display = "flex") : (intro.style.display = "none");
     });
+  gui.add(state, "showContrast").onChange((flag) => {
+    nrrdTools.setShowInMainArea(flag);
+    if (flag) {
+      max.value = nrrdTools.getMaxSliceNum()[1];
+    } else {
+      max.value = nrrdTools.getMaxSliceNum()[0];
+    }
+  });
+
   // gui
   //   .add(state, "contrastSize")
   //   .min(100)
@@ -176,6 +252,24 @@ function setupGui() {
   height: 100vh;
   overflow: hidden;
   /* border: 1px solid palevioletred; */
+}
+#gui {
+  position: absolute;
+  top: 1px;
+  right: 0px;
+  z-index: 100;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+.nrrd_c {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 .copper3d_sliceNumber {
   position: fixed !important;
