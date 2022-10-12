@@ -45,12 +45,15 @@ let immediateSliceNum = ref(0);
 let contrastNum = ref(0);
 
 let base_container = ref<HTMLDivElement>();
+let intro = ref<HTMLDivElement>();
+let c_gui = ref<HTMLDivElement>();
+let nrrd_c = ref<HTMLDivElement>();
 
-let intro: HTMLDivElement = ref<any>(null);
+// let intro: HTMLDivElement = ref<any>(null);
 let scene: Copper.copperScene | undefined;
-let bg: HTMLDivElement = ref<any>(null);
-let c_gui: HTMLDivElement = ref<any>(null);
-let nrrd_c: HTMLDivElement = ref<any>(null);
+// let bg: HTMLDivElement = ref<any>(null);
+// let c_gui: HTMLDivElement = ref<any>(null);
+// let nrrd_c: HTMLDivElement = ref<any>(null);
 let pre_slices = ref();
 
 let gui = new GUI({ width: 300, autoPlace: false });
@@ -73,12 +76,14 @@ onMounted(() => {
   refs = $refs;
   intro = refs.intro;
 
-  bg = refs.base_container;
-  c_gui = $refs.c_gui;
-  nrrd_c = $refs.nrrd_c;
-  c_gui.appendChild(gui.domElement);
-  appRenderer = new Copper.copperRenderer(bg);
-  nrrdTools = new Copper.nrrd_tools(nrrd_c);
+  // bg = refs.base_container;
+  // c_gui = $refs.c_gui;
+  // nrrd_c = $refs.nrrd_c;
+  c_gui.value?.appendChild(gui.domElement);
+  appRenderer = new Copper.copperRenderer(
+    base_container.value as HTMLDivElement
+  );
+  nrrdTools = new Copper.nrrd_tools(nrrd_c.value as HTMLDivElement);
   nrrdTools.setContrastDisplayInMainArea(5);
   nrrdTools.setShowInMainArea(false);
   loadBarMain = Copper.loading();
@@ -86,7 +91,7 @@ onMounted(() => {
 
   document.addEventListener("keydown", (e) => {
     if (e.code === "KeyF") {
-      Copper.fullScreenListenner(bg);
+      Copper.fullScreenListenner(base_container.value as HTMLDivElement);
     }
   });
 
@@ -224,7 +229,9 @@ function setupGui() {
     .add(state, "introduction")
     .name("Intro Panel")
     .onChange((flag) => {
-      flag ? (intro.style.display = "flex") : (intro.style.display = "none");
+      flag
+        ? ((intro.value as HTMLDivElement).style.display = "flex")
+        : ((intro.value as HTMLDivElement).style.display = "none");
     });
   gui.add(state, "showContrast").onChange((flag) => {
     nrrdTools.setShowInMainArea(flag);
