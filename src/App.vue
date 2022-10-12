@@ -38,7 +38,7 @@ import { TrackballControls } from "three/examples/jsm/controls/TrackballControls
 import NavBar from "./components/NavBar.vue";
 import { getCurrentInstance, onMounted, ref } from "vue";
 
-let refs = null;
+// let refs = null;
 let appRenderer: Copper.copperRenderer;
 let max = ref(0);
 let immediateSliceNum = ref(0);
@@ -67,15 +67,16 @@ let readyC4 = ref(false);
 
 onMounted(() => {
   console.log(
-    "%cNRRD Segmentation App %cBeta:v2.1.0",
+
+    "%cNRRD Segmentation App %cBeta:v2.1.2",
 
     "padding: 3px;color:white; background:#d94607",
     "padding: 3px;color:white; background:#219EBC"
   );
 
-  let { $refs } = (getCurrentInstance() as any).proxy;
-  refs = $refs;
-  intro = refs.intro;
+  // let { $refs } = (getCurrentInstance() as any).proxy;
+  // refs = $refs;
+  // intro = refs.intro;
 
   // bg = refs.base_container;
   // c_gui = $refs.c_gui;
