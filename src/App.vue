@@ -214,7 +214,7 @@ function loadNrrd(urls: Array<string>, name: string) {
       scene.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view.json");
 
       Copper.setHDRFilePath("/NRRD_Segmentation_Tool/venice_sunset_1k.hdr");
-      scene.updateBackground("#5454ad", "#18e5a7");
+      scene.updateBackground("#18e5a7", "#ff00ff");
     }
   }
   appRenderer.updateEnvironment();
