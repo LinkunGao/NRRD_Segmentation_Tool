@@ -36,7 +36,7 @@ import * as Copper from "copper3d_visualisation";
 import "copper3d_visualisation/dist/css/style.css";
 import { TrackballControls } from "three/examples/jsm/controls/TrackballControls";
 import NavBar from "./components/NavBar.vue";
-import { getCurrentInstance, onMounted, ref } from "vue";
+import { getCurrentInstance, onMounted, ref, watchEffect } from "vue";
 
 // let refs = null;
 let appRenderer: Copper.copperRenderer;
@@ -49,11 +49,7 @@ let intro = ref<HTMLDivElement>();
 let c_gui = ref<HTMLDivElement>();
 let nrrd_c = ref<HTMLDivElement>();
 
-// let intro: HTMLDivElement = ref<any>(null);
 let scene: Copper.copperScene | undefined;
-// let bg: HTMLDivElement = ref<any>(null);
-// let c_gui: HTMLDivElement = ref<any>(null);
-// let nrrd_c: HTMLDivElement = ref<any>(null);
 let pre_slices = ref();
 
 let gui = new GUI({ width: 300, autoPlace: false });
@@ -64,32 +60,25 @@ let readyC1 = ref(false);
 let readyC2 = ref(false);
 let readyC3 = ref(false);
 let readyC4 = ref(false);
+let allSlices: Array<any> = [];
 
 onMounted(() => {
   console.log(
 
-    "%cNRRD Segmentation App %cBeta:v2.1.2",
+    "%cNRRD Segmentation App %cBeta:v2.1.3",
 
     "padding: 3px;color:white; background:#d94607",
     "padding: 3px;color:white; background:#219EBC"
   );
 
-  // let { $refs } = (getCurrentInstance() as any).proxy;
-  // refs = $refs;
-  // intro = refs.intro;
-
-  // bg = refs.base_container;
-  // c_gui = $refs.c_gui;
-  // nrrd_c = $refs.nrrd_c;
   c_gui.value?.appendChild(gui.domElement);
   appRenderer = new Copper.copperRenderer(
     base_container.value as HTMLDivElement
   );
   nrrdTools = new Copper.nrrd_tools(nrrd_c.value as HTMLDivElement);
-  nrrdTools.setContrastDisplayInMainArea(5);
-  nrrdTools.setShowInMainArea(false);
+
   loadBarMain = Copper.loading();
-  nrrdTools.mainDisplayArea.appendChild(loadBarMain.loadingContainer);
+  (nrrd_c.value as HTMLDivElement).appendChild(loadBarMain.loadingContainer);
 
   document.addEventListener("keydown", (e) => {
     if (e.code === "KeyF") {
@@ -110,7 +99,7 @@ onMounted(() => {
   appRenderer.animate();
 });
 const redraw = () => {
-  nrrdTools.redrawDisplayCanvas();
+  nrrdTools.redrawMianPreOnDisplayCanvas();
 };
 
 const resetSlicesOrientation = (axis: string) => {
@@ -128,17 +117,49 @@ const resetSlicesOrientation = (axis: string) => {
   }
 };
 const getSliceChangedNum = (sliceNum: number) => {
-  if (readyMain && readyC1 && readyC2 && readyC3 && readyC4) {
-    // nrrdTools.setSyncsliceNum();
-    // nrrdTools.updateIndex(sliceNum);
-    // console.log(sliceNum);
-
+  if (
+    readyMain.value &&
+    readyC1.value &&
+    readyC2.value &&
+    readyC3.value &&
+    readyC4.value
+  ) {
     nrrdTools.setSliceMoving(sliceNum);
   }
 };
 const resetMainAreaSize = (factor: number) => {
   nrrdTools.setMainAreaSize(factor);
 };
+
+watchEffect(() => {
+  if (
+    readyMain.value &&
+    readyC1.value &&
+    readyC2.value &&
+    readyC3.value &&
+    readyC4.value
+  ) {
+    console.log("All files ready!");
+    allSlices.sort((a: any, b: any) => {
+      return a.order - b.order;
+    });
+
+    nrrdTools.setAllSlices(allSlices);
+    const getSliceNum = (index: number, contrastindex: number) => {
+      immediateSliceNum.value = index;
+      contrastNum.value = contrastindex;
+    };
+    nrrdTools.drag({
+      showNumber: true,
+      getSliceNum,
+    });
+    nrrdTools.draw(scene as Copper.copperScene, gui);
+
+    scene?.addPreRenderCallbackFunction(nrrdTools.start);
+
+    max.value = nrrdTools.getMaxSliceNum()[0];
+  }
+});
 
 function loadNrrd(urls: Array<string>, name: string) {
   scene = appRenderer.getSceneByName(name) as Copper.copperScene;
@@ -152,68 +173,48 @@ function loadNrrd(urls: Array<string>, name: string) {
         nrrdSlices: Copper.nrrdSliceType
         // gui?: GUI
       ) => {
+        const newNrrdSlice = Object.assign(nrrdSlices, { order: 0 });
+        allSlices.push(newNrrdSlice);
         // scene?.subScene.add(nrrdMesh.z);
         pre_slices.value = nrrdSlices;
-        nrrdTools.setVolumeAndSlice(volume, nrrdSlices.z);
-        max.value = nrrdTools.getMaxSliceNum()[0];
 
-        const getSliceNum = (index: number, contrastindex: number) => {
-          immediateSliceNum.value = index;
-          contrastNum.value = contrastindex;
-        };
-
-        nrrdTools.dragImageWithMode(scene?.controls as TrackballControls, {
-          mode: "mode1",
-          showNumber: true,
-          getSliceNum,
-        });
-        nrrdTools.draw(
-          scene?.controls as TrackballControls,
-          scene as Copper.copperScene,
-          gui
-        );
-        scene?.addPreRenderCallbackFunction(nrrdTools.start);
         readyMain.value = true;
       };
-      const contrast1Area = (
-        volume: any,
-        nrrdMesh: Copper.nrrdMeshesType,
-        nrrdSlices: Copper.nrrdSliceType
-      ) => {
-        nrrdTools.setContrast1OriginCanvas(nrrdSlices.z);
-        readyC1.value = true;
-      };
-      const contrast2Area = (
-        volume: any,
-        nrrdMesh: Copper.nrrdMeshesType,
-        nrrdSlices: Copper.nrrdSliceType
-      ) => {
-        nrrdTools.setContrast2OriginCanvas(nrrdSlices.z);
-        readyC2.value = true;
-      };
-      const contrast3Area = (
-        volume: any,
-        nrrdMesh: Copper.nrrdMeshesType,
-        nrrdSlices: Copper.nrrdSliceType
-      ) => {
-        nrrdTools.setContrast3OriginCanvas(nrrdSlices.z);
-        readyC3.value = true;
-      };
-      const contrast4Area = (
-        volume: any,
-        nrrdMesh: Copper.nrrdMeshesType,
-        nrrdSlices: Copper.nrrdSliceType
-      ) => {
-        nrrdTools.setContrast4OriginCanvas(nrrdSlices.z);
-        readyC4.value = true;
-      };
 
-      scene?.loadNrrd(urls[0], loadBarMain, mainPreArea);
-      scene?.loadNrrd(urls[1], loadBarMain, contrast1Area);
-      scene?.loadNrrd(urls[2], loadBarMain, contrast2Area);
-      scene?.loadNrrd(urls[3], loadBarMain, contrast3Area);
-      scene?.loadNrrd(urls[4], loadBarMain, contrast4Area);
-      scene.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view.json");
+      if (scene) {
+        scene?.loadNrrd(urls[0], loadBarMain, mainPreArea);
+
+        for (let i = 1; i < 5; i++) {
+          scene?.loadNrrd(
+            urls[i],
+            loadBarMain,
+            (
+              volume: any,
+              nrrdMesh: Copper.nrrdMeshesType,
+              nrrdSlices: Copper.nrrdSliceType
+            ) => {
+              const newNrrdSlice = Object.assign(nrrdSlices, { order: i });
+              allSlices.push(newNrrdSlice);
+              let index = i;
+              switch (index) {
+                case 1:
+                  readyC1.value = true;
+                  break;
+                case 2:
+                  readyC2.value = true;
+                  break;
+                case 3:
+                  readyC3.value = true;
+                  break;
+                case 4:
+                  readyC4.value = true;
+                  break;
+              }
+            }
+          );
+        }
+        scene.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view.json");
+      }
 
       Copper.setHDRFilePath("/NRRD_Segmentation_Tool/venice_sunset_1k.hdr");
       scene.updateBackground("#18e5a7", "#ff00ff");
