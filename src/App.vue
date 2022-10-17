@@ -64,7 +64,9 @@ let allSlices: Array<any> = [];
 
 onMounted(() => {
   console.log(
+
     "%cNRRD Segmentation App %cBeta:v2.1.3",
+
     "padding: 3px;color:white; background:#d94607",
     "padding: 3px;color:white; background:#219EBC"
   );

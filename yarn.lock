@@ -286,10 +286,12 @@ copper3d_plugin_heartjs_config@^1.0.7:
   resolved "https://registry.npmjs.org/copper3d_plugin_heartjs_config/-/copper3d_plugin_heartjs_config-1.0.7.tgz"
   integrity sha512-rWhe19DQjC7Ap96uPKmQNy+IBihXTHelAowr5VdgHee+LDTLTLJ75IHsbBxi5ls1LHMxsXhGmWmT3Oy+pgva+Q==
 
+
 copper3d_visualisation@^1.11.28:
   version "1.11.28"
   resolved "https://registry.yarnpkg.com/copper3d_visualisation/-/copper3d_visualisation-1.11.28.tgz#8fe69de75d4dfa9f17390251f36b55e048c507c5"
   integrity sha512-JSS978mJkE26aGuFbC3lQxdSXiW9g3ZCxYtdFXmrmDw7fv1IEni+AVGI+AVmPJM7Rp7PANYHXdq856yNwixIPA==
+
   dependencies:
     "@types/dat.gui" "^0.7.7"
     "@types/three" "^0.140.0"
