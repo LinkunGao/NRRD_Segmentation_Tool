@@ -15,20 +15,21 @@
           ><ion-icon name="remove-circle-outline"></ion-icon
         ></span>
         <span @click="onSwitchSliceOrientation('x')"
-          ><ion-icon name="chevron-back-circle-outline"></ion-icon
-        ></span>
+          ><img class="image" src="../assets/images/x.ico" alt=""
+        /></span>
         <span @click="onSwitchSliceOrientation('z')"
-          ><ion-icon name="chevron-down-circle-outline"></ion-icon
-        ></span>
+          ><img class="image" src="../assets/images/z.ico" alt=""
+        /></span>
         <span @click="onSwitchSliceOrientation('y')"
-          ><ion-icon name="chevron-forward-circle-outline"></ion-icon
-        ></span>
+          ><img class="image" src="../assets/images/y.ico" alt=""
+        /></span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+// <ion-icon name="chevron-down-circle-outline"></ion-icon>
 import { ref, reactive, toRefs, watchEffect } from "vue";
 type Props = {
   fileNum: number;
@@ -158,5 +159,9 @@ watchEffect(() => {
 .nav .content .arrows span:active {
   box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px #fff;
   color: #f44336;
+}
+.image {
+  width: 1em;
+  height: 1em;
 }
 </style>
