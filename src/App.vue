@@ -19,7 +19,7 @@
     <div ref="c_gui" id="gui"></div>
     <div ref="nrrd_c" class="nrrd_c"></div>
     <NavBar
-      :file-num="5"
+      :file-num="fileNum"
       :max="max"
       :immediate-slice-num="immediateSliceNum"
       :contrast-index="contrastNum"
@@ -42,6 +42,7 @@ let appRenderer: Copper.copperRenderer;
 let max = ref(0);
 let immediateSliceNum = ref(0);
 let contrastNum = ref(0);
+let fileNum = ref(0);
 
 let base_container = ref<HTMLDivElement>();
 let intro = ref<HTMLDivElement>();
@@ -64,7 +65,7 @@ let allSlices: Array<any> = [];
 onMounted(() => {
   console.log(
 
-    "%cNRRD Segmentation App %cBeta:v2.1.4",
+    "%cNRRD Segmentation App %cBeta:v2.1.5",
 
     "padding: 3px;color:white; background:#d94607",
     "padding: 3px;color:white; background:#219EBC"
@@ -89,9 +90,11 @@ onMounted(() => {
     "/NRRD_Segmentation_Tool/nrrd/ax dyn pre.nrrd",
     "/NRRD_Segmentation_Tool/nrrd/ax dyn 1st pass.nrrd",
     "/NRRD_Segmentation_Tool/nrrd/ax dyn 2nd pass.nrrd",
-    // "/NRRD_Segmentation_Tool/nrrd/ax dyn 3rd pass.nrrd",
-    // "/NRRD_Segmentation_Tool/nrrd/ax dyn 4th pass.nrrd",
+    "/NRRD_Segmentation_Tool/nrrd/ax dyn 3rd pass.nrrd",
+    "/NRRD_Segmentation_Tool/nrrd/ax dyn 4th pass.nrrd",
   ];
+
+  fileNum.value = urls.length;
 
   setupGui();
   loadNrrd(urls, "nrrd_tools");
