@@ -37,15 +37,17 @@ type Props = {
   max?: number;
   immediateSliceNum?: number;
   contrastIndex?: number;
+  isAxisClicked?: boolean;
 };
 let p = withDefaults(defineProps<Props>(), {
   min: 0,
   max: 160,
   immediateSliceNum: 0,
   contrastIndex: 0,
+  isAxisClicked: false,
 });
 const state = reactive(p);
-const { max, immediateSliceNum, contrastIndex } = toRefs(state);
+const { max, immediateSliceNum, contrastIndex, isAxisClicked } = toRefs(state);
 const sliceNum = ref(0);
 let preViousSliceNum = p.min;
 let previousMax = 0;
@@ -75,6 +77,9 @@ const onMagnificationClick = (factor: number) => {
 };
 
 const onChangeSlider = () => {
+  preViousSliceNum > max.value
+    ? (preViousSliceNum = max.value)
+    : preViousSliceNum;
   const step = sliceNum.value - preViousSliceNum;
   emit("onSliceChange", step);
   preViousSliceNum += step;
@@ -89,17 +94,19 @@ watchEffect(() => {
 });
 
 watchEffect(() => {
-  if (max.value > previousMax) {
-    sliceNum.value = sliceNum.value * p.fileNum;
-    if (count !== 0) isShowContrast = true;
-    count++;
+  if (!isAxisClicked.value) {
+    if (max.value > previousMax) {
+      sliceNum.value = sliceNum.value * p.fileNum;
+      if (count !== 0) isShowContrast = true;
+      count++;
+    }
+    if (max.value < previousMax) {
+      sliceNum.value = Math.floor(sliceNum.value / p.fileNum);
+      isShowContrast = false;
+    }
+    preViousSliceNum = sliceNum.value;
+    previousMax = max.value;
   }
-  if (max.value < previousMax) {
-    sliceNum.value = Math.floor(sliceNum.value / p.fileNum);
-    isShowContrast = false;
-  }
-  preViousSliceNum = sliceNum.value;
-  previousMax = max.value;
 });
 </script>
 
