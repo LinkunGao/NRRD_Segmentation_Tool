@@ -54,7 +54,6 @@ let magnification = 1;
 
 const emit = defineEmits([
   "onSliceChange",
-  "redrawPre",
   "resetMainAreaSize",
   "onChangeOrientation",
 ]);
@@ -80,10 +79,6 @@ const onChangeSlider = () => {
   preViousSliceNum += step;
 };
 
-const needToUpdatePre = () => {
-  emit("redrawPre");
-};
-
 watchEffect(() => {
   if (isShowContrast) {
     sliceNum.value = immediateSliceNum.value * p.fileNum + contrastIndex.value;
@@ -101,7 +96,6 @@ watchEffect(() => {
   if (max.value < previousMax) {
     sliceNum.value = Math.floor(sliceNum.value / p.fileNum);
     isShowContrast = false;
-    needToUpdatePre();
   }
   preViousSliceNum = sliceNum.value;
   previousMax = max.value;
