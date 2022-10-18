@@ -24,7 +24,6 @@
       :immediate-slice-num="immediateSliceNum"
       :contrast-index="contrastNum"
       @on-slice-change="getSliceChangedNum"
-      @redraw-pre="redraw"
       @reset-main-area-size="resetMainAreaSize"
       @on-change-orientation="resetSlicesOrientation"
     ></NavBar>
@@ -64,7 +63,7 @@ let allSlices: Array<any> = [];
 
 onMounted(() => {
   console.log(
-    "%cNRRD Segmentation App %cBeta:v2.1.3",
+    "%cNRRD Segmentation App %cBeta:v2.1.4",
     "padding: 3px;color:white; background:#d94607",
     "padding: 3px;color:white; background:#219EBC"
   );
@@ -88,30 +87,22 @@ onMounted(() => {
     "/NRRD_Segmentation_Tool/nrrd/ax dyn pre.nrrd",
     "/NRRD_Segmentation_Tool/nrrd/ax dyn 1st pass.nrrd",
     "/NRRD_Segmentation_Tool/nrrd/ax dyn 2nd pass.nrrd",
-    "/NRRD_Segmentation_Tool/nrrd/ax dyn 3rd pass.nrrd",
-    "/NRRD_Segmentation_Tool/nrrd/ax dyn 4th pass.nrrd",
+    // "/NRRD_Segmentation_Tool/nrrd/ax dyn 3rd pass.nrrd",
+    // "/NRRD_Segmentation_Tool/nrrd/ax dyn 4th pass.nrrd",
   ];
 
   setupGui();
   loadNrrd(urls, "nrrd_tools");
   appRenderer.animate();
 });
-const redraw = () => {
-  nrrdTools.redrawMianPreOnDisplayCanvas();
-};
 
-const resetSlicesOrientation = (axis: string) => {
-  console.log(pre_slices.value);
-
-  console.log(axis);
-  switch (axis) {
-    case "x":
-      // nrrdTools.setSliceOritention([pre_slices.value.x]);
-      break;
-    case "y":
-      break;
-    case "z":
-      break;
+const resetSlicesOrientation = (axis: "x" | "y" | "z") => {
+  nrrdTools.setSliceOrientation(axis);
+  const status = nrrdTools.getIsShowContrastState();
+  if (status) {
+    max.value = nrrdTools.getMaxSliceNum()[1];
+  } else {
+    max.value = nrrdTools.getMaxSliceNum()[0];
   }
 };
 const getSliceChangedNum = (sliceNum: number) => {
@@ -182,7 +173,7 @@ function loadNrrd(urls: Array<string>, name: string) {
       if (scene) {
         scene?.loadNrrd(urls[0], loadBarMain, mainPreArea);
 
-        for (let i = 1; i < 5; i++) {
+        for (let i = 1; i < urls.length; i++) {
           scene?.loadNrrd(
             urls[i],
             loadBarMain,
