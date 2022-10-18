@@ -9,11 +9,11 @@
       />
       <div class="arrows">
         <span @click="onMagnificationClick(0.2)"
-          ><ion-icon name="add-circle-outline"></ion-icon
-        ></span>
+          ><img class="image" src="../assets/images/zoom-in.ico" alt=""
+        /></span>
         <span @click="onMagnificationClick(-0.2)"
-          ><ion-icon name="remove-circle-outline"></ion-icon
-        ></span>
+          ><img class="image" src="../assets/images/zoom-out.ico" alt=""
+        /></span>
         <span @click="onSwitchSliceOrientation('x')"
           ><img class="image" src="../assets/images/x.ico" alt=""
         /></span>
