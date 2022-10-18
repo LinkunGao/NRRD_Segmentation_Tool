@@ -19,7 +19,8 @@ jobs:
           node-version: 16
 
       - name: Install dependencies
-        uses: bahmutov/npm-install@v1
+        uses: jaid/action-npm-install@v1.2.1
+        # uses: bahmutov/npm-install@v1
 
       - name: Build project
         run: npm run build
