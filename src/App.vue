@@ -23,6 +23,7 @@
       :max="max"
       :immediate-slice-num="immediateSliceNum"
       :contrast-index="contrastNum"
+      :is-axis-clicked="isAxisClicked"
       @on-slice-change="getSliceChangedNum"
       @reset-main-area-size="resetMainAreaSize"
       @on-change-orientation="resetSlicesOrientation"
@@ -61,6 +62,7 @@ let readyC2 = ref(false);
 let readyC3 = ref(false);
 let readyC4 = ref(false);
 let allSlices: Array<any> = [];
+let isAxisClicked = ref(false);
 
 onMounted(() => {
   console.log(
@@ -73,6 +75,7 @@ onMounted(() => {
   appRenderer = new Copper.copperRenderer(
     base_container.value as HTMLDivElement
   );
+
   nrrdTools = new Copper.nrrd_tools(nrrd_c.value as HTMLDivElement);
 
   loadBarMain = Copper.loading();
@@ -102,6 +105,7 @@ onMounted(() => {
 const resetSlicesOrientation = (axis: "x" | "y" | "z") => {
   nrrdTools.setSliceOrientation(axis);
   const status = nrrdTools.getIsShowContrastState();
+  isAxisClicked.value = true;
   if (status) {
     max.value = nrrdTools.getMaxSliceNum()[1];
   } else {
@@ -230,6 +234,7 @@ function setupGui() {
     });
   gui.add(state, "showContrast").onChange((flag) => {
     nrrdTools.setShowInMainArea(flag);
+    isAxisClicked.value = false;
     if (flag) {
       max.value = nrrdTools.getMaxSliceNum()[1];
     } else {
