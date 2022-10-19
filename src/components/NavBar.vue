@@ -23,6 +23,9 @@
         <span @click="onSwitchSliceOrientation('y')"
           ><img class="image" src="../assets/images/y.ico" alt=""
         /></span>
+        <span @click="openDialog">
+          <ion-icon name="cloud-upload-outline"></ion-icon>
+        </span>
       </div>
     </div>
   </div>
@@ -59,7 +62,11 @@ const emit = defineEmits([
   "onSliceChange",
   "resetMainAreaSize",
   "onChangeOrientation",
+  "onOpenDialog",
 ]);
+const openDialog = () => {
+  emit("onOpenDialog", true);
+};
 
 const onSwitchSliceOrientation = (axis: string) => {
   emit("onChangeOrientation", axis);
@@ -112,7 +119,7 @@ watchEffect(() => {
 
 <style scoped>
 .el-slider {
-  max-width: 30vw;
+  max-width: 35vw;
   margin-right: 10px;
   --el-slider__bar-bg-color: red !important;
 }
@@ -140,6 +147,7 @@ watchEffect(() => {
   box-shadow: 0 30px 30px rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 .nav .content .arrows {
   display: flex;

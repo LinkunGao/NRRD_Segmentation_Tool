@@ -27,7 +27,9 @@
       @on-slice-change="getSliceChangedNum"
       @reset-main-area-size="resetMainAreaSize"
       @on-change-orientation="resetSlicesOrientation"
+      @on-open-dialog="onOpenDialog"
     ></NavBar>
+    <Upload :dialog="dialog" @on-close-dialog="onCloseDialog"></Upload>
   </div>
 </template>
 <script setup lang="ts">
@@ -35,6 +37,7 @@ import { GUI } from "dat.gui";
 import * as Copper from "copper3d_visualisation";
 import "copper3d_visualisation/dist/css/style.css";
 import NavBar from "./components/NavBar.vue";
+import Upload from "./components/Upload.vue";
 import { getCurrentInstance, onMounted, ref, watchEffect } from "vue";
 
 // let refs = null;
@@ -62,6 +65,7 @@ let readyC3 = ref(false);
 let readyC4 = ref(false);
 let allSlices: Array<any> = [];
 let isAxisClicked = ref(false);
+let dialog = ref(false);
 
 onMounted(() => {
   console.log(
@@ -100,6 +104,13 @@ onMounted(() => {
   loadNrrd(urls, "nrrd_tools");
   appRenderer.animate();
 });
+
+const onOpenDialog = (flag: boolean) => {
+  dialog.value = flag;
+};
+const onCloseDialog = (flag: boolean) => {
+  dialog.value = flag;
+};
 
 const resetSlicesOrientation = (axis: "x" | "y" | "z") => {
   nrrdTools.setSliceOrientation(axis);
