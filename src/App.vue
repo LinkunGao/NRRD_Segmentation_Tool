@@ -24,6 +24,7 @@
       :immediate-slice-num="immediateSliceNum"
       :contrast-index="contrastNum"
       :is-axis-clicked="isAxisClicked"
+      :init-slice-index="initSliceIndex"
       @on-slice-change="getSliceChangedNum"
       @reset-main-area-size="resetMainAreaSize"
       @on-change-orientation="resetSlicesOrientation"
@@ -46,6 +47,7 @@ let max = ref(0);
 let immediateSliceNum = ref(0);
 let contrastNum = ref(0);
 let fileNum = ref(0);
+let initSliceIndex = ref(0);
 
 let base_container = ref<HTMLDivElement>();
 let intro = ref<HTMLDivElement>();
@@ -69,7 +71,7 @@ let dialog = ref(false);
 
 onMounted(() => {
   console.log(
-    "%cNRRD Segmentation App %cBeta:v2.1.7",
+    "%cNRRD Segmentation App %cBeta:v2.1.8",
     "padding: 3px;color:white; background:#d94607",
     "padding: 3px;color:white; background:#219EBC"
   );
@@ -151,6 +153,7 @@ watchEffect(() => {
     });
 
     nrrdTools.setAllSlices(allSlices);
+    initSliceIndex.value = nrrdTools.getCurrentSliceIndex();
     const getSliceNum = (index: number, contrastindex: number) => {
       immediateSliceNum.value = index;
       contrastNum.value = contrastindex;

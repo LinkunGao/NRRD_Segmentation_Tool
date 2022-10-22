@@ -38,6 +38,7 @@ type Props = {
   fileNum: number;
   min?: number;
   max?: number;
+  initSliceIndex?: number;
   immediateSliceNum?: number;
   contrastIndex?: number;
   isAxisClicked?: boolean;
@@ -50,7 +51,8 @@ let p = withDefaults(defineProps<Props>(), {
   isAxisClicked: false,
 });
 const state = reactive(p);
-const { max, immediateSliceNum, contrastIndex, isAxisClicked } = toRefs(state);
+const { max, immediateSliceNum, contrastIndex, isAxisClicked, initSliceIndex } =
+  toRefs(state);
 const sliceNum = ref(0);
 let preViousSliceNum = p.min;
 let previousMax = 0;
@@ -91,6 +93,10 @@ const onChangeSlider = () => {
   emit("onSliceChange", step);
   preViousSliceNum += step;
 };
+
+watchEffect(() => {
+  initSliceIndex?.value && (sliceNum.value = initSliceIndex.value);
+});
 
 watchEffect(() => {
   if (isShowContrast) {
