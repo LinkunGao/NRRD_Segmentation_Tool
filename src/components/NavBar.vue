@@ -59,6 +59,7 @@ let previousMax = 0;
 let isShowContrast = false;
 let count = 0;
 let magnification = 1;
+let initFlag = false;
 
 const emit = defineEmits([
   "onSliceChange",
@@ -96,6 +97,7 @@ const onChangeSlider = () => {
 
 watchEffect(() => {
   initSliceIndex?.value && (sliceNum.value = initSliceIndex.value);
+  initFlag = true;
 });
 
 watchEffect(() => {
@@ -119,6 +121,10 @@ watchEffect(() => {
     }
     preViousSliceNum = sliceNum.value;
     previousMax = max.value;
+  }
+  if (initFlag) {
+    sliceNum.value = initSliceIndex?.value as number;
+    initFlag = false;
   }
 });
 </script>

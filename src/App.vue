@@ -71,7 +71,7 @@ let dialog = ref(false);
 
 onMounted(() => {
   console.log(
-    "%cNRRD Segmentation App %cBeta:v2.1.8",
+    "%cNRRD Segmentation App %cBeta:v2.1.9",
     "padding: 3px;color:white; background:#d94607",
     "padding: 3px;color:white; background:#219EBC"
   );
@@ -153,7 +153,7 @@ watchEffect(() => {
     });
 
     nrrdTools.setAllSlices(allSlices);
-    initSliceIndex.value = nrrdTools.getCurrentSliceIndex();
+
     const getSliceNum = (index: number, contrastindex: number) => {
       immediateSliceNum.value = index;
       contrastNum.value = contrastindex;
@@ -165,6 +165,7 @@ watchEffect(() => {
     nrrdTools.draw(scene as Copper.copperScene, gui);
 
     scene?.addPreRenderCallbackFunction(nrrdTools.start);
+    initSliceIndex.value = nrrdTools.getCurrentSliceIndex();
 
     max.value = nrrdTools.getMaxSliceNum()[0];
   }
