@@ -24,10 +24,13 @@
       :immediate-slice-num="immediateSliceNum"
       :contrast-index="contrastNum"
       :is-axis-clicked="isAxisClicked"
+      :init-slice-index="initSliceIndex"
       @on-slice-change="getSliceChangedNum"
       @reset-main-area-size="resetMainAreaSize"
       @on-change-orientation="resetSlicesOrientation"
+      @on-open-dialog="onOpenDialog"
     ></NavBar>
+    <Upload :dialog="dialog" @on-close-dialog="onCloseDialog"></Upload>
   </div>
 </template>
 <script setup lang="ts">
@@ -35,6 +38,7 @@ import { GUI } from "dat.gui";
 import * as Copper from "copper3d_visualisation";
 import "copper3d_visualisation/dist/css/style.css";
 import NavBar from "./components/NavBar.vue";
+import Upload from "./components/Upload.vue";
 import { getCurrentInstance, onMounted, ref, watchEffect } from "vue";
 
 // let refs = null;
@@ -43,6 +47,7 @@ let max = ref(0);
 let immediateSliceNum = ref(0);
 let contrastNum = ref(0);
 let fileNum = ref(0);
+let initSliceIndex = ref(0);
 
 let base_container = ref<HTMLDivElement>();
 let intro = ref<HTMLDivElement>();
@@ -62,10 +67,11 @@ let readyC3 = ref(false);
 let readyC4 = ref(false);
 let allSlices: Array<any> = [];
 let isAxisClicked = ref(false);
+let dialog = ref(false);
 
 onMounted(() => {
   console.log(
-    "%cNRRD Segmentation App %cBeta:v2.1.7",
+    "%cNRRD Segmentation App %cBeta:v2.1.9",
     "padding: 3px;color:white; background:#d94607",
     "padding: 3px;color:white; background:#219EBC"
   );
@@ -100,6 +106,13 @@ onMounted(() => {
   loadNrrd(urls, "nrrd_tools");
   appRenderer.animate();
 });
+
+const onOpenDialog = (flag: boolean) => {
+  dialog.value = flag;
+};
+const onCloseDialog = (flag: boolean) => {
+  dialog.value = flag;
+};
 
 const resetSlicesOrientation = (axis: "x" | "y" | "z") => {
   nrrdTools.setSliceOrientation(axis);
@@ -140,6 +153,7 @@ watchEffect(() => {
     });
 
     nrrdTools.setAllSlices(allSlices);
+
     const getSliceNum = (index: number, contrastindex: number) => {
       immediateSliceNum.value = index;
       contrastNum.value = contrastindex;
@@ -151,6 +165,7 @@ watchEffect(() => {
     nrrdTools.draw(scene as Copper.copperScene, gui);
 
     scene?.addPreRenderCallbackFunction(nrrdTools.start);
+    initSliceIndex.value = nrrdTools.getCurrentSliceIndex();
 
     max.value = nrrdTools.getMaxSliceNum()[0];
   }

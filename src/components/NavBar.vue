@@ -23,6 +23,9 @@
         <span @click="onSwitchSliceOrientation('y')"
           ><img class="image" src="../assets/images/y.ico" alt=""
         /></span>
+        <span @click="openDialog">
+          <ion-icon name="cloud-upload-outline"></ion-icon>
+        </span>
       </div>
     </div>
   </div>
@@ -35,6 +38,7 @@ type Props = {
   fileNum: number;
   min?: number;
   max?: number;
+  initSliceIndex?: number;
   immediateSliceNum?: number;
   contrastIndex?: number;
   isAxisClicked?: boolean;
@@ -47,19 +51,25 @@ let p = withDefaults(defineProps<Props>(), {
   isAxisClicked: false,
 });
 const state = reactive(p);
-const { max, immediateSliceNum, contrastIndex, isAxisClicked } = toRefs(state);
+const { max, immediateSliceNum, contrastIndex, isAxisClicked, initSliceIndex } =
+  toRefs(state);
 const sliceNum = ref(0);
 let preViousSliceNum = p.min;
 let previousMax = 0;
 let isShowContrast = false;
 let count = 0;
 let magnification = 1;
+let initFlag = false;
 
 const emit = defineEmits([
   "onSliceChange",
   "resetMainAreaSize",
   "onChangeOrientation",
+  "onOpenDialog",
 ]);
+const openDialog = () => {
+  emit("onOpenDialog", true);
+};
 
 const onSwitchSliceOrientation = (axis: string) => {
   emit("onChangeOrientation", axis);
@@ -86,6 +96,11 @@ const onChangeSlider = () => {
 };
 
 watchEffect(() => {
+  initSliceIndex?.value && (sliceNum.value = initSliceIndex.value);
+  initFlag = true;
+});
+
+watchEffect(() => {
   if (isShowContrast) {
     sliceNum.value = immediateSliceNum.value * p.fileNum + contrastIndex.value;
   } else {
@@ -107,12 +122,16 @@ watchEffect(() => {
     preViousSliceNum = sliceNum.value;
     previousMax = max.value;
   }
+  if (initFlag) {
+    sliceNum.value = initSliceIndex?.value as number;
+    initFlag = false;
+  }
 });
 </script>
 
 <style scoped>
 .el-slider {
-  max-width: 30vw;
+  max-width: 35vw;
   margin-right: 10px;
   --el-slider__bar-bg-color: red !important;
 }
@@ -140,6 +159,7 @@ watchEffect(() => {
   box-shadow: 0 30px 30px rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 .nav .content .arrows {
   display: flex;
