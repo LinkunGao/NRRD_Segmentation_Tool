@@ -81,7 +81,7 @@ type selecedType = {
 
 onMounted(() => {
   console.log(
-    "%cNRRD Segmentation App %cBeta:v2.1.9",
+    "%cNRRD Segmentation App %cBeta:v2.1.10",
     "padding: 3px;color:white; background:#d94607",
     "padding: 3px;color:white; background:#219EBC"
   );

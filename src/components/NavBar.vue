@@ -98,7 +98,6 @@ const onMagnificationClick = (factor: number) => {
 
 const onChangeSlider = () => {
   const step = sliceNum.value - currentSliderNum;
-  console.log("setp:", step);
   currentSliderNum += step;
   if (!isAxis && !isFileChange) {
     emit("onSliceChange", step);
