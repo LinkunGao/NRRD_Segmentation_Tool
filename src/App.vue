@@ -216,6 +216,15 @@ function loadModel(name: string) {
     }
 
     appRenderer.updateEnvironment();
+
+    urls = [
+      "/NRRD_Segmentation_Tool/nrrd/pre.nrrd",
+      "/NRRD_Segmentation_Tool/nrrd/c1.nrrd",
+      "/NRRD_Segmentation_Tool/nrrd/c2.nrrd",
+      "/NRRD_Segmentation_Tool/nrrd/c3.nrrd",
+      "/NRRD_Segmentation_Tool/nrrd/c4.nrrd",
+    ];
+    loadAllNrrds(urls);
   }
 }
 

@@ -15,13 +15,16 @@
           ><img class="image" src="../assets/images/zoom-out.ico" alt=""
         /></span>
         <span @click="onSwitchSliceOrientation('x')"
-          ><img class="image" src="../assets/images/x.ico" alt=""
+          ><img
+            class="image"
+            src="../assets/images/person_left_view.png"
+            alt=""
         /></span>
         <span @click="onSwitchSliceOrientation('z')"
-          ><img class="image" src="../assets/images/z.ico" alt=""
+          ><img class="image" src="../assets/images/person_anterior.png" alt=""
         /></span>
         <span @click="onSwitchSliceOrientation('y')"
-          ><img class="image" src="../assets/images/y.ico" alt=""
+          ><img class="image" src="../assets/images/person_top_down.png" alt=""
         /></span>
         <span @click="openDialog">
           <ion-icon name="cloud-upload-outline"></ion-icon>
