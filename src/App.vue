@@ -81,7 +81,7 @@ type selecedType = {
 
 onMounted(() => {
   console.log(
-    "%cNRRD Segmentation App %cBeta:v2.1.10",
+    "%cNRRD Segmentation App %cBeta:v2.2.0",
     "padding: 3px;color:white; background:#d94607",
     "padding: 3px;color:white; background:#219EBC"
   );
@@ -218,11 +218,11 @@ function loadModel(name: string) {
     appRenderer.updateEnvironment();
 
     urls = [
-      "/NRRD_Segmentation_Tool/nrrd/pre.nrrd",
-      "/NRRD_Segmentation_Tool/nrrd/c1.nrrd",
-      "/NRRD_Segmentation_Tool/nrrd/c2.nrrd",
-      "/NRRD_Segmentation_Tool/nrrd/c3.nrrd",
-      "/NRRD_Segmentation_Tool/nrrd/c4.nrrd",
+      "/NRRD_Segmentation_Tool/nrrd/case1/pre.nrrd",
+      "/NRRD_Segmentation_Tool/nrrd/case1/c1.nrrd",
+      "/NRRD_Segmentation_Tool/nrrd/case1/c2.nrrd",
+      "/NRRD_Segmentation_Tool/nrrd/case1/c3.nrrd",
+      "/NRRD_Segmentation_Tool/nrrd/case1/c4.nrrd",
     ];
     loadAllNrrds(urls);
   }
@@ -265,6 +265,7 @@ function setupGui() {
   const state = {
     introduction: true,
     showContrast: false,
+    switchCase: "case1",
   };
   gui
     .add(state, "introduction")
@@ -273,6 +274,42 @@ function setupGui() {
       flag
         ? ((intro.value as HTMLDivElement).style.display = "flex")
         : ((intro.value as HTMLDivElement).style.display = "none");
+    });
+
+  gui
+    .add(state, "switchCase", ["case1", "case2", "case3"])
+    .onChange((value) => {
+      switch (value) {
+        case "case1":
+          urls = [
+            "/NRRD_Segmentation_Tool/nrrd/case1/pre.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case1/c1.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case1/c2.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case1/c3.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case1/c4.nrrd",
+          ];
+          break;
+
+        case "case2":
+          urls = [
+            "/NRRD_Segmentation_Tool/nrrd/case2/pre.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case2/c1.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case2/c2.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case2/c3.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case2/c4.nrrd",
+          ];
+          break;
+        case "case3":
+          urls = [
+            "/NRRD_Segmentation_Tool/nrrd/case3/pre.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case3/c1.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case3/c2.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case3/c3.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case3/c4.nrrd",
+          ];
+          break;
+      }
+      readyToLoad(urls);
     });
   gui.add(state, "showContrast").onChange((flag) => {
     nrrdTools.setShowInMainArea(flag);
