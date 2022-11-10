@@ -25,12 +25,17 @@
       :contrast-index="contrastNum"
       :is-axis-clicked="isAxisClicked"
       :init-slice-index="initSliceIndex"
+      :show-contrast="isShowContrast"
       @on-slice-change="getSliceChangedNum"
       @reset-main-area-size="resetMainAreaSize"
       @on-change-orientation="resetSlicesOrientation"
       @on-open-dialog="onOpenDialog"
     ></NavBar>
-    <Upload :dialog="dialog" @on-close-dialog="onCloseDialog"></Upload>
+    <Upload
+      :dialog="dialog"
+      @on-close-dialog="onCloseDialog"
+      @get-load-files-urls="readyToLoad"
+    ></Upload>
   </div>
 </template>
 <script setup lang="ts">
@@ -48,6 +53,9 @@ let immediateSliceNum = ref(0);
 let contrastNum = ref(0);
 let fileNum = ref(0);
 let initSliceIndex = ref(0);
+let isAxisClicked = ref(false);
+let dialog = ref(false);
+let isShowContrast = ref(false);
 
 let base_container = ref<HTMLDivElement>();
 let intro = ref<HTMLDivElement>();
@@ -60,18 +68,20 @@ let pre_slices = ref();
 let gui = new GUI({ width: 300, autoPlace: false });
 let nrrdTools: Copper.nrrd_tools;
 let loadBarMain: Copper.loadingBarType;
-let readyMain = ref(false);
-let readyC1 = ref(false);
-let readyC2 = ref(false);
-let readyC3 = ref(false);
-let readyC4 = ref(false);
 let allSlices: Array<any> = [];
-let isAxisClicked = ref(false);
-let dialog = ref(false);
+let urls: Array<string> = [];
+
+let filesCount = ref(0);
+let selectedContrastFolder: GUI;
+let firstLoad = true;
+
+type selecedType = {
+  [key: string]: boolean;
+};
 
 onMounted(() => {
   console.log(
-    "%cNRRD Segmentation App %cBeta:v2.1.9",
+    "%cNRRD Segmentation App %cBeta:v2.2.0",
     "padding: 3px;color:white; background:#d94607",
     "padding: 3px;color:white; background:#219EBC"
   );
@@ -92,20 +102,16 @@ onMounted(() => {
     }
   });
 
-  const urls = [
-    "/NRRD_Segmentation_Tool/nrrd/ax dyn pre.nrrd",
-    "/NRRD_Segmentation_Tool/nrrd/ax dyn 1st pass.nrrd",
-    "/NRRD_Segmentation_Tool/nrrd/ax dyn 2nd pass.nrrd",
-    "/NRRD_Segmentation_Tool/nrrd/ax dyn 3rd pass.nrrd",
-    "/NRRD_Segmentation_Tool/nrrd/ax dyn 4th pass.nrrd",
-  ];
-
-  fileNum.value = urls.length;
-
   setupGui();
-  loadNrrd(urls, "nrrd_tools");
+  loadModel("nrrd_tools");
   appRenderer.animate();
 });
+
+const readyToLoad = (urlsArray: Array<string>) => {
+  fileNum.value = urlsArray.length;
+  urls = urlsArray;
+  if (urls.length > 0) loadAllNrrds(urls);
+};
 
 const onOpenDialog = (flag: boolean) => {
   dialog.value = flag;
@@ -125,15 +131,7 @@ const resetSlicesOrientation = (axis: "x" | "y" | "z") => {
   }
 };
 const getSliceChangedNum = (sliceNum: number) => {
-  if (
-    readyMain.value &&
-    readyC1.value &&
-    readyC2.value &&
-    readyC3.value &&
-    readyC4.value
-  ) {
-    nrrdTools.setSliceMoving(sliceNum);
-  }
+  nrrdTools.setSliceMoving(sliceNum);
 };
 const resetMainAreaSize = (factor: number) => {
   nrrdTools.setMainAreaSize(factor);
@@ -141,102 +139,133 @@ const resetMainAreaSize = (factor: number) => {
 
 watchEffect(() => {
   if (
-    readyMain.value &&
-    readyC1.value &&
-    readyC2.value &&
-    readyC3.value &&
-    readyC4.value
+    filesCount.value != 0 &&
+    allSlices.length != 0 &&
+    filesCount.value === urls.length
   ) {
     console.log("All files ready!");
+    nrrdTools.clear();
     allSlices.sort((a: any, b: any) => {
       return a.order - b.order;
     });
 
     nrrdTools.setAllSlices(allSlices);
+    initSliceIndex.value = nrrdTools.getCurrentSliceIndex();
 
     const getSliceNum = (index: number, contrastindex: number) => {
       immediateSliceNum.value = index;
       contrastNum.value = contrastindex;
     };
-    nrrdTools.drag({
-      showNumber: true,
-      getSliceNum,
-    });
-    nrrdTools.draw(scene as Copper.copperScene, gui);
+    if (firstLoad) {
+      nrrdTools.drag({
+        showNumber: true,
+        getSliceNum,
+      });
+      nrrdTools.draw(scene as Copper.copperScene, gui);
 
-    scene?.addPreRenderCallbackFunction(nrrdTools.start);
-    initSliceIndex.value = nrrdTools.getCurrentSliceIndex();
+      scene?.addPreRenderCallbackFunction(nrrdTools.start);
+    } else {
+      nrrdTools.redrawMianPreOnDisplayCanvas();
+    }
 
     max.value = nrrdTools.getMaxSliceNum()[0];
+    filesCount.value = 0;
+    firstLoad = false;
+
+    const selectedState: selecedType = {};
+
+    for (let i = 0; i < allSlices.length - 1; i++) {
+      const key = "contrast" + i;
+      selectedState[key] = true;
+    }
+
+    nrrdTools.removeGuiFolderChilden(selectedContrastFolder);
+    for (let i = 0; i < allSlices.length - 1; i++) {
+      selectedContrastFolder
+        .add(selectedState, "contrast" + i)
+        .onChange((flag) => {
+          if (flag) {
+            fileNum.value += 1;
+            nrrdTools.removeSkip(i);
+          } else {
+            fileNum.value -= 1;
+            nrrdTools.addSkip(i);
+          }
+          const maxNum = nrrdTools.getMaxSliceNum()[1];
+          if (maxNum) {
+            max.value = maxNum;
+          }
+        });
+    }
   }
 });
 
-function loadNrrd(urls: Array<string>, name: string) {
+function loadModel(name: string) {
   scene = appRenderer.getSceneByName(name) as Copper.copperScene;
   if (scene == undefined) {
     scene = appRenderer.createScene(name) as Copper.copperScene;
+
     if (scene) {
       appRenderer.setCurrentScene(scene);
-      const mainPreArea = (
-        volume: any,
-        nrrdMesh: Copper.nrrdMeshesType,
-        nrrdSlices: Copper.nrrdSliceType
-        // gui?: GUI
-      ) => {
-        const newNrrdSlice = Object.assign(nrrdSlices, { order: 0 });
-        allSlices.push(newNrrdSlice);
-        // scene?.subScene.add(nrrdMesh.z);
-        pre_slices.value = nrrdSlices;
-
-        readyMain.value = true;
-      };
 
       if (scene) {
-        scene?.loadNrrd(urls[0], loadBarMain, mainPreArea);
-
-        for (let i = 1; i < urls.length; i++) {
-          scene?.loadNrrd(
-            urls[i],
-            loadBarMain,
-            (
-              volume: any,
-              nrrdMesh: Copper.nrrdMeshesType,
-              nrrdSlices: Copper.nrrdSliceType
-            ) => {
-              const newNrrdSlice = Object.assign(nrrdSlices, { order: i });
-              allSlices.push(newNrrdSlice);
-              let index = i;
-              switch (index) {
-                case 1:
-                  readyC1.value = true;
-                  break;
-                case 2:
-                  readyC2.value = true;
-                  break;
-                case 3:
-                  readyC3.value = true;
-                  break;
-                case 4:
-                  readyC4.value = true;
-                  break;
-              }
-            }
-          );
-        }
         scene.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view.json");
       }
-
       Copper.setHDRFilePath("/NRRD_Segmentation_Tool/venice_sunset_1k.hdr");
       scene.updateBackground("#18e5a7", "#ff00ff");
     }
+
+    appRenderer.updateEnvironment();
+
+    urls = [
+      "/NRRD_Segmentation_Tool/nrrd/case1/pre.nrrd",
+      "/NRRD_Segmentation_Tool/nrrd/case1/c1.nrrd",
+      "/NRRD_Segmentation_Tool/nrrd/case1/c2.nrrd",
+      "/NRRD_Segmentation_Tool/nrrd/case1/c3.nrrd",
+      "/NRRD_Segmentation_Tool/nrrd/case1/c4.nrrd",
+    ];
+    loadAllNrrds(urls);
   }
-  appRenderer.updateEnvironment();
 }
+
+const loadAllNrrds = (urls: Array<string>) => {
+  allSlices = [];
+  const mainPreArea = (
+    volume: any,
+    nrrdMesh: Copper.nrrdMeshesType,
+    nrrdSlices: Copper.nrrdSliceType
+    // gui?: GUI
+  ) => {
+    const newNrrdSlice = Object.assign(nrrdSlices, { order: 0 });
+    allSlices.push(newNrrdSlice);
+    pre_slices.value = nrrdSlices;
+
+    filesCount.value += 1;
+  };
+  scene?.loadNrrd(urls[0], loadBarMain, mainPreArea);
+
+  for (let i = 1; i < urls.length; i++) {
+    scene?.loadNrrd(
+      urls[i],
+      loadBarMain,
+      (
+        volume: any,
+        nrrdMesh: Copper.nrrdMeshesType,
+        nrrdSlices: Copper.nrrdSliceType
+      ) => {
+        const newNrrdSlice = Object.assign(nrrdSlices, { order: i });
+        allSlices.push(newNrrdSlice);
+        filesCount.value += 1;
+      }
+    );
+  }
+};
 
 function setupGui() {
   const state = {
     introduction: true,
     showContrast: false,
+    switchCase: "case1",
   };
   gui
     .add(state, "introduction")
@@ -245,6 +274,42 @@ function setupGui() {
       flag
         ? ((intro.value as HTMLDivElement).style.display = "flex")
         : ((intro.value as HTMLDivElement).style.display = "none");
+    });
+
+  gui
+    .add(state, "switchCase", ["case1", "case2", "case3"])
+    .onChange((value) => {
+      switch (value) {
+        case "case1":
+          urls = [
+            "/NRRD_Segmentation_Tool/nrrd/case1/pre.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case1/c1.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case1/c2.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case1/c3.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case1/c4.nrrd",
+          ];
+          break;
+
+        case "case2":
+          urls = [
+            "/NRRD_Segmentation_Tool/nrrd/case2/pre.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case2/c1.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case2/c2.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case2/c3.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case2/c4.nrrd",
+          ];
+          break;
+        case "case3":
+          urls = [
+            "/NRRD_Segmentation_Tool/nrrd/case3/pre.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case3/c1.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case3/c2.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case3/c3.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case3/c4.nrrd",
+          ];
+          break;
+      }
+      readyToLoad(urls);
     });
   gui.add(state, "showContrast").onChange((flag) => {
     nrrdTools.setShowInMainArea(flag);
@@ -255,15 +320,7 @@ function setupGui() {
       max.value = nrrdTools.getMaxSliceNum()[0];
     }
   });
-
-  // gui
-  //   .add(state, "contrastSize")
-  //   .min(100)
-  //   .max(400)
-  //   .onChange((size) => {
-  //     nrrdTools.setContrastSize(size, size);
-  //     nrrdTools.updateContrastArea();
-  //   });
+  selectedContrastFolder = gui.addFolder("select display contrast");
 }
 </script>
 

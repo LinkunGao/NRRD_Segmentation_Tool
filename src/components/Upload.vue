@@ -3,6 +3,7 @@
     <el-upload
       :auto-upload="false"
       @change="loaded"
+      @remove="removeLoadFile"
       class="upload-demo"
       drag
       action="/"
@@ -13,9 +14,7 @@
         Drop file here or <em>click to upload</em>
       </div>
       <template #tip>
-        <div class="el-upload__tip">
-          jpg/png files with a size less than 500kb
-        </div>
+        <div class="el-upload__tip">Please drag or upload NRRD files!</div>
       </template>
     </el-upload>
   </div>
@@ -24,7 +23,7 @@
 <script setup lang="ts">
 import { UploadFilled } from "@element-plus/icons-vue";
 import type { UploadFile } from "element-plus";
-import { ref, reactive, toRefs, shallowReactive } from "vue";
+
 type Props = {
   dialog?: boolean;
 };
@@ -34,36 +33,60 @@ withDefaults(defineProps<Props>(), {
 });
 
 let files: Array<File> = [];
+let urls: Array<string> = [];
+let loadedFiles = false;
 
-const emit = defineEmits(["onCloseDialog"]);
+const emit = defineEmits(["onCloseDialog", "getLoadFilesUrls"]);
 const closeDialog = (e: MouseEvent) => {
   let e1 = e.currentTarget;
   let e2 = e.target;
   if (e1 === e2) {
     // openDialog.value = false;
-    console.log(files);
-
+    files.forEach((file) => {
+      const url = URL.createObjectURL(file);
+      urls.push(url);
+    });
+    emit("getLoadFilesUrls", urls);
     emit("onCloseDialog", false);
+    loadedFiles = true;
+    resetLoadState();
   }
+};
+
+const resetLoadState = () => {
+  files = [];
+  urls.forEach((url) => {
+    URL.revokeObjectURL(url);
+  });
+  urls = [];
 };
 
 const loaded = (uploadFile: UploadFile) => {
   //   console.log(uploadFile);
   //   console.log(uploadFile.name);
   //   console.log(uploadFile.raw);
+  if (loadedFiles) {
+    loadedFiles = false;
+    resetLoadState();
+  }
 
-  console.log(1);
-
-  //   let filename = uploadFile.name;
-  //   let file: File | undefined;
-  //   if (filename.match(/\.(nrrd)$/)) {
-  //     file = uploadFile.raw as File;
-  //     files.push(file);
-  //   }
-  //   if (!file) {
-  //     onError("No .nrrd asset found!");
-  //   }
+  let filename = uploadFile.name;
+  let file: File | undefined;
+  if (filename.match(/\.(nrrd)$/)) {
+    file = uploadFile.raw as File;
+    files.push(file);
+  }
+  if (!file) {
+    onError("No .nrrd asset found!");
+  }
 };
+
+const removeLoadFile = (uploadFile: UploadFile) => {
+  files = files.filter((file) => {
+    return file.name !== uploadFile.name;
+  });
+};
+
 /**
  * @param  {Error} error
  */
@@ -82,7 +105,6 @@ const onError = (error: string | Error) => {
     message = "Missing texture: " + (error as any).target.src.split("/").pop();
   }
   window.alert(message);
-  console.error(error);
 };
 </script>
 

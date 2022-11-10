@@ -15,13 +15,16 @@
           ><img class="image" src="../assets/images/zoom-out.ico" alt=""
         /></span>
         <span @click="onSwitchSliceOrientation('x')"
-          ><img class="image" src="../assets/images/x.ico" alt=""
+          ><img
+            class="image"
+            src="../assets/images/person_left_view.png"
+            alt=""
         /></span>
         <span @click="onSwitchSliceOrientation('z')"
-          ><img class="image" src="../assets/images/z.ico" alt=""
+          ><img class="image" src="../assets/images/person_anterior.png" alt=""
         /></span>
         <span @click="onSwitchSliceOrientation('y')"
-          ><img class="image" src="../assets/images/y.ico" alt=""
+          ><img class="image" src="../assets/images/person_top_down.png" alt=""
         /></span>
         <span @click="openDialog">
           <ion-icon name="cloud-upload-outline"></ion-icon>
@@ -32,12 +35,12 @@
 </template>
 
 <script setup lang="ts">
-// <ion-icon name="chevron-down-circle-outline"></ion-icon>
 import { ref, reactive, toRefs, watchEffect } from "vue";
 type Props = {
   fileNum: number;
   min?: number;
   max?: number;
+  showContrast?: boolean;
   initSliceIndex?: number;
   immediateSliceNum?: number;
   contrastIndex?: number;
@@ -48,18 +51,26 @@ let p = withDefaults(defineProps<Props>(), {
   max: 160,
   immediateSliceNum: 0,
   contrastIndex: 0,
+  fileNum: 0,
+  showContrast: false,
   isAxisClicked: false,
 });
 const state = reactive(p);
-const { max, immediateSliceNum, contrastIndex, isAxisClicked, initSliceIndex } =
-  toRefs(state);
+const {
+  immediateSliceNum,
+  contrastIndex,
+  initSliceIndex,
+  fileNum,
+  showContrast,
+} = toRefs(state);
 const sliceNum = ref(0);
-let preViousSliceNum = p.min;
-let previousMax = 0;
+
 let isShowContrast = false;
-let count = 0;
 let magnification = 1;
-let initFlag = false;
+let filesNum = 0;
+let currentSliderNum = 0;
+let isAxis = false;
+let isFileChange = false;
 
 const emit = defineEmits([
   "onSliceChange",
@@ -67,11 +78,13 @@ const emit = defineEmits([
   "onChangeOrientation",
   "onOpenDialog",
 ]);
+
 const openDialog = () => {
   emit("onOpenDialog", true);
 };
 
 const onSwitchSliceOrientation = (axis: string) => {
+  isAxis = true;
   emit("onChangeOrientation", axis);
 };
 
@@ -87,45 +100,53 @@ const onMagnificationClick = (factor: number) => {
 };
 
 const onChangeSlider = () => {
-  preViousSliceNum > max.value
-    ? (preViousSliceNum = max.value)
-    : preViousSliceNum;
-  const step = sliceNum.value - preViousSliceNum;
-  emit("onSliceChange", step);
-  preViousSliceNum += step;
+  const step = sliceNum.value - currentSliderNum;
+  currentSliderNum += step;
+  if (!isAxis && !isFileChange) {
+    emit("onSliceChange", step);
+  }
+  isAxis = false;
+  isFileChange = false;
+};
+
+const updateSlider = () => {
+  sliceNum.value = currentSliderNum;
 };
 
 watchEffect(() => {
-  initSliceIndex?.value && (sliceNum.value = initSliceIndex.value);
-  initFlag = true;
+  if (showContrast.value) {
+    currentSliderNum = currentSliderNum * filesNum;
+  } else {
+    currentSliderNum = Math.floor(currentSliderNum / filesNum);
+  }
+  isShowContrast = showContrast.value;
+  updateSlider();
+});
+
+watchEffect(() => {
+  const old = filesNum;
+  filesNum = fileNum.value;
+  if (old > 0 && isShowContrast) {
+    isFileChange = true;
+    currentSliderNum = Math.floor(currentSliderNum / old) * filesNum;
+    updateSlider();
+    isFileChange = false;
+  }
 });
 
 watchEffect(() => {
   if (isShowContrast) {
-    sliceNum.value = immediateSliceNum.value * p.fileNum + contrastIndex.value;
+    currentSliderNum =
+      immediateSliceNum.value * fileNum.value + contrastIndex.value;
   } else {
-    sliceNum.value = immediateSliceNum.value;
+    currentSliderNum = immediateSliceNum.value;
   }
+  updateSlider();
 });
 
 watchEffect(() => {
-  if (!isAxisClicked.value) {
-    if (max.value > previousMax) {
-      sliceNum.value = sliceNum.value * p.fileNum;
-      if (count !== 0) isShowContrast = true;
-      count++;
-    }
-    if (max.value < previousMax) {
-      sliceNum.value = Math.floor(sliceNum.value / p.fileNum);
-      isShowContrast = false;
-    }
-    preViousSliceNum = sliceNum.value;
-    previousMax = max.value;
-  }
-  if (initFlag) {
-    sliceNum.value = initSliceIndex?.value as number;
-    initFlag = false;
-  }
+  initSliceIndex?.value && (currentSliderNum = initSliceIndex.value);
+  updateSlider();
 });
 </script>
 
