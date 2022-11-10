@@ -15,6 +15,9 @@
       </div>
       <template #tip>
         <div class="el-upload__tip">Please drag or upload NRRD files!</div>
+        <div class="el-upload__tip">
+          Ready to Submit: Please click drak area!!!
+        </div>
       </template>
     </el-upload>
   </div>
