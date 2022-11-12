@@ -141,9 +141,6 @@ watchEffect(() => {
     nrrdTools.setShowInMainArea(true);
     nrrdTools.setAllSlices(allSlices);
     initSliceIndex.value = nrrdTools.getCurrentSliceIndex();
-    setTimeout(() => {
-      initSliceIndex.value = 0;
-    }, 1000);
 
     const getSliceNum = (index: number, contrastindex: number) => {
       immediateSliceNum.value = index;
@@ -162,7 +159,10 @@ watchEffect(() => {
     }
 
     max.value = nrrdTools.getMaxSliceNum()[1];
-    filesCount.value = 0;
+    setTimeout(() => {
+      initSliceIndex.value = 0;
+      filesCount.value = 0;
+    }, 1000);
     firstLoad = false;
 
     const selectedState: selecedType = {};
@@ -226,6 +226,7 @@ function loadModel(name: string) {
 }
 
 const loadAllNrrds = (urls: Array<string>) => {
+  fileNum.value = urls.length;
   allSlices = [];
   const mainPreArea = (
     volume: any,

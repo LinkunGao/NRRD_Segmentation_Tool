@@ -8,12 +8,12 @@
         show-input
       />
       <div class="arrows">
-        <span @click="onMagnificationClick(0.2)"
+        <!-- <span @click="onMagnificationClick(0.2)"
           ><img class="image" src="../assets/images/zoom-in.ico" alt=""
         /></span>
         <span @click="onMagnificationClick(-0.2)"
           ><img class="image" src="../assets/images/zoom-out.ico" alt=""
-        /></span>
+        /></span> -->
         <span @click="onSwitchSliceOrientation('x')"
           ><img
             class="image"
