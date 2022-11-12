@@ -2,11 +2,9 @@
   <div id="bg" ref="base_container">
     <div class="intro" ref="intro">
       <h3>How to use:</h3>
-      <p><strong>--> Zoom:</strong> Use mouse wheel.</p>
-      <p><strong>--> Pan: </strong> Use mouse right click + drag image.</p>
-      <p>
-        <strong>--> Switch slice:</strong> Use mouse left click + drag image.
-      </p>
+      <p><strong>--> Zoom:</strong> Mouse wheel.</p>
+      <p><strong>--> Pan: </strong> Mouse right click + drag image.</p>
+      <p><strong>--> Switch slice:</strong> Mouse left click + drag image.</p>
       <p>
         <strong>--> Painting:</strong> Press `shift` key on your keyboard (don't
         release it), then use mouse left click to paint.
