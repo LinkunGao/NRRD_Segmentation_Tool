@@ -40,9 +40,8 @@ import * as Copper from "copper3d_visualisation";
 import "copper3d_visualisation/dist/css/style.css";
 import NavBar from "./components/NavBar.vue";
 import Upload from "./components/Upload.vue";
-import { getCurrentInstance, onMounted, ref, watchEffect } from "vue";
+import { onMounted, ref, watchEffect } from "vue";
 
-// let refs = null;
 let appRenderer: Copper.copperRenderer;
 let max = ref(0);
 let immediateSliceNum = ref(0);
