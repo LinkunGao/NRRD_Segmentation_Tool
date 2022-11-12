@@ -56,16 +56,10 @@ let p = withDefaults(defineProps<Props>(), {
   isAxisClicked: false,
 });
 const state = reactive(p);
-const {
-  immediateSliceNum,
-  contrastIndex,
-  initSliceIndex,
-  fileNum,
-  showContrast,
-} = toRefs(state);
+const { immediateSliceNum, contrastIndex, initSliceIndex, fileNum } =
+  toRefs(state);
 const sliceNum = ref(0);
 
-let isShowContrast = false;
 let magnification = 1;
 let filesNum = 0;
 let currentSliderNum = 0;
@@ -114,19 +108,9 @@ const updateSlider = () => {
 };
 
 watchEffect(() => {
-  if (showContrast.value) {
-    currentSliderNum = currentSliderNum * filesNum;
-  } else {
-    currentSliderNum = Math.floor(currentSliderNum / filesNum);
-  }
-  isShowContrast = showContrast.value;
-  updateSlider();
-});
-
-watchEffect(() => {
   const old = filesNum;
   filesNum = fileNum.value;
-  if (old > 0 && isShowContrast) {
+  if (old > 0) {
     isFileChange = true;
     currentSliderNum = Math.floor(currentSliderNum / old) * filesNum;
     updateSlider();
@@ -135,17 +119,14 @@ watchEffect(() => {
 });
 
 watchEffect(() => {
-  if (isShowContrast) {
-    currentSliderNum =
-      immediateSliceNum.value * fileNum.value + contrastIndex.value;
-  } else {
-    currentSliderNum = immediateSliceNum.value;
-  }
+  currentSliderNum =
+    immediateSliceNum.value * fileNum.value + contrastIndex.value;
   updateSlider();
 });
 
 watchEffect(() => {
-  initSliceIndex?.value && (currentSliderNum = initSliceIndex.value);
+  initSliceIndex?.value &&
+    (currentSliderNum = (initSliceIndex?.value as number) * fileNum.value);
   updateSlider();
 });
 </script>

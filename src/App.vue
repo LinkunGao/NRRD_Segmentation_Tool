@@ -23,9 +23,7 @@
       :max="max"
       :immediate-slice-num="immediateSliceNum"
       :contrast-index="contrastNum"
-      :is-axis-clicked="isAxisClicked"
       :init-slice-index="initSliceIndex"
-      :show-contrast="isShowContrast"
       @on-slice-change="getSliceChangedNum"
       @reset-main-area-size="resetMainAreaSize"
       @on-change-orientation="resetSlicesOrientation"
@@ -53,9 +51,7 @@ let immediateSliceNum = ref(0);
 let contrastNum = ref(0);
 let fileNum = ref(0);
 let initSliceIndex = ref(0);
-let isAxisClicked = ref(false);
 let dialog = ref(false);
-let isShowContrast = ref(false);
 
 let base_container = ref<HTMLDivElement>();
 let intro = ref<HTMLDivElement>();
@@ -122,13 +118,7 @@ const onCloseDialog = (flag: boolean) => {
 
 const resetSlicesOrientation = (axis: "x" | "y" | "z") => {
   nrrdTools.setSliceOrientation(axis);
-  const status = nrrdTools.getIsShowContrastState();
-  isAxisClicked.value = true;
-  if (status) {
-    max.value = nrrdTools.getMaxSliceNum()[1];
-  } else {
-    max.value = nrrdTools.getMaxSliceNum()[0];
-  }
+  max.value = nrrdTools.getMaxSliceNum()[1];
 };
 const getSliceChangedNum = (sliceNum: number) => {
   nrrdTools.setSliceMoving(sliceNum);
@@ -148,9 +138,12 @@ watchEffect(() => {
     allSlices.sort((a: any, b: any) => {
       return a.order - b.order;
     });
-
+    nrrdTools.setShowInMainArea(true);
     nrrdTools.setAllSlices(allSlices);
     initSliceIndex.value = nrrdTools.getCurrentSliceIndex();
+    setTimeout(() => {
+      initSliceIndex.value = 0;
+    }, 1000);
 
     const getSliceNum = (index: number, contrastindex: number) => {
       immediateSliceNum.value = index;
@@ -168,34 +161,38 @@ watchEffect(() => {
       nrrdTools.redrawMianPreOnDisplayCanvas();
     }
 
-    max.value = nrrdTools.getMaxSliceNum()[0];
+    max.value = nrrdTools.getMaxSliceNum()[1];
     filesCount.value = 0;
     firstLoad = false;
 
     const selectedState: selecedType = {};
 
-    for (let i = 0; i < allSlices.length - 1; i++) {
-      const key = "contrast" + i;
-      selectedState[key] = true;
+    for (let i = 0; i < allSlices.length; i++) {
+      if (i == 0) {
+        selectedState["pre"] = true;
+      } else {
+        const key = "contrast" + i;
+        selectedState[key] = true;
+      }
     }
 
     nrrdTools.removeGuiFolderChilden(selectedContrastFolder);
-    for (let i = 0; i < allSlices.length - 1; i++) {
-      selectedContrastFolder
-        .add(selectedState, "contrast" + i)
-        .onChange((flag) => {
-          if (flag) {
-            fileNum.value += 1;
-            nrrdTools.removeSkip(i);
-          } else {
-            fileNum.value -= 1;
-            nrrdTools.addSkip(i);
-          }
-          const maxNum = nrrdTools.getMaxSliceNum()[1];
-          if (maxNum) {
-            max.value = maxNum;
-          }
-        });
+    for (let i = 0; i < allSlices.length; i++) {
+      let name = "";
+      i === 0 ? (name = "pre") : (name = "contrast" + i);
+      selectedContrastFolder.add(selectedState, name).onChange((flag) => {
+        if (flag) {
+          fileNum.value += 1;
+          nrrdTools.addSkip(i);
+        } else {
+          fileNum.value -= 1;
+          nrrdTools.removeSkip(i);
+        }
+        const maxNum = nrrdTools.getMaxSliceNum()[1];
+        if (maxNum) {
+          max.value = maxNum;
+        }
+      });
     }
   }
 });
@@ -282,44 +279,43 @@ function setupGui() {
       switch (value) {
         case "case1":
           urls = [
-            "/NRRD_Segmentation_Tool/nrrd/case1/pre.nrrd",
-            "/NRRD_Segmentation_Tool/nrrd/case1/c1.nrrd",
-            "/NRRD_Segmentation_Tool/nrrd/case1/c2.nrrd",
-            "/NRRD_Segmentation_Tool/nrrd/case1/c3.nrrd",
-            "/NRRD_Segmentation_Tool/nrrd/case1/c4.nrrd",
+            "https://abi-heart-app.s3.amazonaws.com/nrrd/case1/pre.nrrd",
+            "https://abi-heart-app.s3.amazonaws.com/nrrd/case1/c1.nrrd",
+            "https://abi-heart-app.s3.amazonaws.com/nrrd/case1/c2.nrrd",
+            "https://abi-heart-app.s3.amazonaws.com/nrrd/case1/c3.nrrd",
+            "https://abi-heart-app.s3.amazonaws.com/nrrd/case1/c4.nrrd",
           ];
           break;
-
         case "case2":
           urls = [
-            "/NRRD_Segmentation_Tool/nrrd/case2/pre.nrrd",
-            "/NRRD_Segmentation_Tool/nrrd/case2/c1.nrrd",
-            "/NRRD_Segmentation_Tool/nrrd/case2/c2.nrrd",
-            "/NRRD_Segmentation_Tool/nrrd/case2/c3.nrrd",
-            "/NRRD_Segmentation_Tool/nrrd/case2/c4.nrrd",
+            "https://abi-heart-app.s3.amazonaws.com/nrrd/case2/pre.nrrd",
+            "https://abi-heart-app.s3.amazonaws.com/nrrd/case2/c1.nrrd",
+            "https://abi-heart-app.s3.amazonaws.com/nrrd/case2/c2.nrrd",
+            "https://abi-heart-app.s3.amazonaws.com/nrrd/case2/c3.nrrd",
+            "https://abi-heart-app.s3.amazonaws.com/nrrd/case2/c4.nrrd",
           ];
           break;
         case "case3":
           urls = [
-            "/NRRD_Segmentation_Tool/nrrd/case3/pre.nrrd",
-            "/NRRD_Segmentation_Tool/nrrd/case3/c1.nrrd",
-            "/NRRD_Segmentation_Tool/nrrd/case3/c2.nrrd",
-            "/NRRD_Segmentation_Tool/nrrd/case3/c3.nrrd",
-            "/NRRD_Segmentation_Tool/nrrd/case3/c4.nrrd",
+            "https://abi-heart-app.s3.amazonaws.com/nrrd/case3/pre.nrrd",
+            "https://abi-heart-app.s3.amazonaws.com/nrrd/case3/c1.nrrd",
+            "https://abi-heart-app.s3.amazonaws.com/nrrd/case3/c2.nrrd",
+            "https://abi-heart-app.s3.amazonaws.com/nrrd/case3/c3.nrrd",
+            "https://abi-heart-app.s3.amazonaws.com/nrrd/case3/c4.nrrd",
           ];
           break;
       }
       readyToLoad(urls);
     });
-  gui.add(state, "showContrast").onChange((flag) => {
-    nrrdTools.setShowInMainArea(flag);
-    isAxisClicked.value = false;
-    if (flag) {
-      max.value = nrrdTools.getMaxSliceNum()[1];
-    } else {
-      max.value = nrrdTools.getMaxSliceNum()[0];
-    }
-  });
+  // gui.add(state, "showContrast").onChange((flag) => {
+  //   nrrdTools.setShowInMainArea(flag);
+  //   isAxisClicked.value = false;
+  //   if (flag) {
+  //     max.value = nrrdTools.getMaxSliceNum()[1];
+  //   } else {
+  //     max.value = nrrdTools.getMaxSliceNum()[0];
+  //   }
+  // });
   selectedContrastFolder = gui.addFolder("select display contrast");
 }
 </script>
