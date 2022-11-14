@@ -92,6 +92,18 @@ const onMagnificationClick = (factor: number) => {
   }
   emit("resetMainAreaSize", magnification);
 };
+document.addEventListener("keydown", (ev: KeyboardEvent) => {
+  if (ev.key === "ArrowUp") {
+    currentSliderNum -= 1;
+    updateSlider();
+    emit("onSliceChange", -1);
+  }
+  if (ev.key === "ArrowDown") {
+    currentSliderNum += 1;
+    updateSlider();
+    emit("onSliceChange", 1);
+  }
+});
 
 const onChangeSlider = () => {
   const step = sliceNum.value - currentSliderNum;
