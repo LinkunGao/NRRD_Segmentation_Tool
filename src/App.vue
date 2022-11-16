@@ -13,6 +13,11 @@
         <strong> --> Undo:</strong> 1. In GUI click undo; or 2. on keyborad
         using ctrl+z (windows) / command+z (mac).
       </p>
+      <p>
+        <strong> --> Cursor Inspector:</strong> Press `s` on the keyboard to
+        enable/disable, then left click on images, and use bottom tool's bar to
+        switch the image orientation.
+      </p>
     </div>
     <div ref="c_gui" id="gui"></div>
     <div ref="nrrd_c" class="nrrd_c"></div>
@@ -277,29 +282,29 @@ function setupGui() {
       switch (value) {
         case "case1":
           urls = [
-            "https://abi-heart-app.s3.amazonaws.com/nrrd/case1/pre.nrrd",
-            "https://abi-heart-app.s3.amazonaws.com/nrrd/case1/c1.nrrd",
-            "https://abi-heart-app.s3.amazonaws.com/nrrd/case1/c2.nrrd",
-            "https://abi-heart-app.s3.amazonaws.com/nrrd/case1/c3.nrrd",
-            "https://abi-heart-app.s3.amazonaws.com/nrrd/case1/c4.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case1/pre.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case1/c1.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case1/c2.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case1/c3.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case1/c4.nrrd",
           ];
           break;
         case "case2":
           urls = [
-            "https://abi-heart-app.s3.amazonaws.com/nrrd/case2/pre.nrrd",
-            "https://abi-heart-app.s3.amazonaws.com/nrrd/case2/c1.nrrd",
-            "https://abi-heart-app.s3.amazonaws.com/nrrd/case2/c2.nrrd",
-            "https://abi-heart-app.s3.amazonaws.com/nrrd/case2/c3.nrrd",
-            "https://abi-heart-app.s3.amazonaws.com/nrrd/case2/c4.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case2/pre.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case2/c1.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case2/c2.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case2/c3.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case2/c4.nrrd",
           ];
           break;
         case "case3":
           urls = [
-            "https://abi-heart-app.s3.amazonaws.com/nrrd/case3/pre.nrrd",
-            "https://abi-heart-app.s3.amazonaws.com/nrrd/case3/c1.nrrd",
-            "https://abi-heart-app.s3.amazonaws.com/nrrd/case3/c2.nrrd",
-            "https://abi-heart-app.s3.amazonaws.com/nrrd/case3/c3.nrrd",
-            "https://abi-heart-app.s3.amazonaws.com/nrrd/case3/c4.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case3/pre.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case3/c1.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case3/c2.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case3/c3.nrrd",
+            "/NRRD_Segmentation_Tool/nrrd/case3/c4.nrrd",
           ];
           break;
       }
