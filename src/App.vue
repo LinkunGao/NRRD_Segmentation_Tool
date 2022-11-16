@@ -121,6 +121,10 @@ const onCloseDialog = (flag: boolean) => {
 const resetSlicesOrientation = (axis: "x" | "y" | "z") => {
   nrrdTools.setSliceOrientation(axis);
   max.value = nrrdTools.getMaxSliceNum()[1];
+  const { currentIndex, contrastIndex } =
+    nrrdTools.getCurrentSlicesNumAndContrastNum();
+  immediateSliceNum.value = currentIndex;
+  contrastNum.value = contrastIndex;
 };
 const getSliceChangedNum = (sliceNum: number) => {
   nrrdTools.setSliceMoving(sliceNum);
