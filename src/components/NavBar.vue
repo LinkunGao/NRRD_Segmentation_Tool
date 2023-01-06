@@ -120,17 +120,6 @@ const updateSlider = () => {
 };
 
 watchEffect(() => {
-  const old = filesNum;
-  filesNum = fileNum.value;
-  if (old > 0) {
-    isFileChange = true;
-    currentSliderNum = Math.floor(currentSliderNum / old) * filesNum;
-    updateSlider();
-    isFileChange = false;
-  }
-});
-
-watchEffect(() => {
   currentSliderNum =
     immediateSliceNum.value * fileNum.value + contrastIndex.value;
   updateSlider();
