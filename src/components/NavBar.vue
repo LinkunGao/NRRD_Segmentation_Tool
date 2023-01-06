@@ -94,14 +94,18 @@ const onMagnificationClick = (factor: number) => {
 };
 document.addEventListener("keydown", (ev: KeyboardEvent) => {
   if (ev.key === "ArrowUp") {
-    currentSliderNum -= 1;
-    updateSlider();
-    emit("onSliceChange", -1);
+    if (currentSliderNum > 0) {
+      currentSliderNum -= 1;
+      updateSlider();
+      emit("onSliceChange", -1);
+    }
   }
   if (ev.key === "ArrowDown") {
-    currentSliderNum += 1;
-    updateSlider();
-    emit("onSliceChange", 1);
+    if (currentSliderNum < p.max) {
+      currentSliderNum += 1;
+      updateSlider();
+      emit("onSliceChange", 1);
+    }
   }
 });
 
