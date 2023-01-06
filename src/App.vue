@@ -197,6 +197,11 @@ watchEffect(() => {
         const maxNum = nrrdTools.getMaxSliceNum()[1];
         if (maxNum) {
           max.value = maxNum;
+          const { currentIndex, contrastIndex } =
+            nrrdTools.getCurrentSlicesNumAndContrastNum();
+
+          immediateSliceNum.value = currentIndex;
+          contrastNum.value = contrastIndex + 1;
         }
       });
     }

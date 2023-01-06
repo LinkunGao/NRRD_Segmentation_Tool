@@ -94,14 +94,18 @@ const onMagnificationClick = (factor: number) => {
 };
 document.addEventListener("keydown", (ev: KeyboardEvent) => {
   if (ev.key === "ArrowUp") {
-    currentSliderNum -= 1;
-    updateSlider();
-    emit("onSliceChange", -1);
+    if (currentSliderNum > 0) {
+      currentSliderNum -= 1;
+      updateSlider();
+      emit("onSliceChange", -1);
+    }
   }
   if (ev.key === "ArrowDown") {
-    currentSliderNum += 1;
-    updateSlider();
-    emit("onSliceChange", 1);
+    if (currentSliderNum < p.max) {
+      currentSliderNum += 1;
+      updateSlider();
+      emit("onSliceChange", 1);
+    }
   }
 });
 
@@ -118,17 +122,6 @@ const onChangeSlider = () => {
 const updateSlider = () => {
   sliceNum.value = currentSliderNum;
 };
-
-watchEffect(() => {
-  const old = filesNum;
-  filesNum = fileNum.value;
-  if (old > 0) {
-    isFileChange = true;
-    currentSliderNum = Math.floor(currentSliderNum / old) * filesNum;
-    updateSlider();
-    isFileChange = false;
-  }
-});
 
 watchEffect(() => {
   currentSliderNum =
