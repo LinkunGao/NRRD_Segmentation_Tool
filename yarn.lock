@@ -291,10 +291,10 @@ copper3d_plugin_heartjs_config@^1.0.7:
   resolved "https://registry.yarnpkg.com/copper3d_plugin_heartjs_config/-/copper3d_plugin_heartjs_config-1.0.7.tgz#42f72c631c27fe0396dd29bf83888cb996772f33"
   integrity sha512-rWhe19DQjC7Ap96uPKmQNy+IBihXTHelAowr5VdgHee+LDTLTLJ75IHsbBxi5ls1LHMxsXhGmWmT3Oy+pgva+Q==
 
-copper3d_visualisation@^1.12.20:
-  version "1.12.20"
-  resolved "https://registry.yarnpkg.com/copper3d_visualisation/-/copper3d_visualisation-1.12.20.tgz#8237cfda399e2e5dd0c73c39ff2a74707922bd8a"
-  integrity sha512-RrvkqGjnqij+ulrNClXI0fQttsQtapZOQ0OTErS9PE9STkylpSqpES1Bvcu+jimI1Lh+PdRKweF/7TIII5aJUA==
+copper3d_visualisation@^1.12.25:
+  version "1.12.25"
+  resolved "https://registry.yarnpkg.com/copper3d_visualisation/-/copper3d_visualisation-1.12.25.tgz#1a247098cc00541c114123ef3241c6c90902da15"
+  integrity sha512-idJrCMnbmVUM34YQiJKk+5dOTc2UBhNIKHwszJ9zWIb7VTYPYbZWXBNWwRCtxmy/uOkVmY+kHUjvj98fJ08QuA==
   dependencies:
     "@types/dat.gui" "^0.7.7"
     "@types/three" "^0.140.0"
@@ -302,6 +302,7 @@ copper3d_visualisation@^1.12.20:
     dat.gui "^0.7.9"
     dicom-parser "^1.8.13"
     fflate "^0.7.3"
+    file-saver "^2.0.5"
     glsl-blend-soft-light "^1.0.5"
     glsl-film-grain "^1.0.4"
     three "^0.144.0"
@@ -489,6 +490,11 @@ fflate@^0.7.3:
   version "0.7.4"
   resolved "https://registry.yarnpkg.com/fflate/-/fflate-0.7.4.tgz#61587e5d958fdabb5a9368a302c25363f4f69f50"
   integrity sha512-5u2V/CDW15QM1XbbgS+0DfPxVB+jUKhWEKuuFuHncbk3tEEqzmoXL+2KyOFuKGqOnmdIy0/davWF1CkuwtibCw==
+
+file-saver@^2.0.5:
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/file-saver/-/file-saver-2.0.5.tgz#d61cfe2ce059f414d899e9dd6d4107ee25670c38"
+  integrity sha512-P9bmyZ3h/PRG+Nzga+rbdI4OEpNDzAVyy74uVO9ATgzLK6VtAsYybF/+TOCvrc0MO793d6+42lLyZTw7/ArVzA==
 
 fill-range@^7.0.1:
   version "7.0.1"
