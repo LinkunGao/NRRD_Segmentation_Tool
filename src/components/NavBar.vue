@@ -80,6 +80,7 @@ const openDialog = () => {
 const onSwitchSliceOrientation = (axis: string) => {
   isAxis = true;
   emit("onChangeOrientation", axis);
+  isAxis = false;
 };
 
 const onMagnificationClick = (factor: number) => {
