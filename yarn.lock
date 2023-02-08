@@ -291,21 +291,30 @@ copper3d_plugin_heartjs_config@^1.0.7:
   resolved "https://registry.yarnpkg.com/copper3d_plugin_heartjs_config/-/copper3d_plugin_heartjs_config-1.0.7.tgz#42f72c631c27fe0396dd29bf83888cb996772f33"
   integrity sha512-rWhe19DQjC7Ap96uPKmQNy+IBihXTHelAowr5VdgHee+LDTLTLJ75IHsbBxi5ls1LHMxsXhGmWmT3Oy+pgva+Q==
 
-copper3d_visualisation@^1.12.25:
-  version "1.12.25"
-  resolved "https://registry.yarnpkg.com/copper3d_visualisation/-/copper3d_visualisation-1.12.25.tgz#1a247098cc00541c114123ef3241c6c90902da15"
-  integrity sha512-idJrCMnbmVUM34YQiJKk+5dOTc2UBhNIKHwszJ9zWIb7VTYPYbZWXBNWwRCtxmy/uOkVmY+kHUjvj98fJ08QuA==
+copper3d_plugin_nrrd@^1.2.2:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/copper3d_plugin_nrrd/-/copper3d_plugin_nrrd-1.2.2.tgz#1465a7a9fdd327929912c815aad181660bde4562"
+  integrity sha512-Y7jp8c8NEgk4af4lKPM5WLgPoB+DFjrHJzULYqGpYjeph3s4omnDG4SBHE41mDn1ct4TbaKuMY0ZATYHLoIRGg==
+  dependencies:
+    fflate "^0.7.4"
+    three "^0.148.0"
+
+copper3d_visualisation@^1.13.8:
+  version "1.13.8"
+  resolved "https://registry.yarnpkg.com/copper3d_visualisation/-/copper3d_visualisation-1.13.8.tgz#4d51913e69a500c2477d9fba715e72e4aac94865"
+  integrity sha512-fXYi5TzAGVLDxGQrkg1igr4tnqiAPYx1HuJIpIlCwB9DIX3UPZWGdylIzJZ13fsGFcRPEYrNBBG/fIGvhsRpvg==
   dependencies:
     "@types/dat.gui" "^0.7.7"
     "@types/three" "^0.140.0"
     copper3d_plugin_heart_k "^1.0.14"
+    copper3d_plugin_nrrd "^1.2.2"
     dat.gui "^0.7.9"
     dicom-parser "^1.8.13"
     fflate "^0.7.3"
     file-saver "^2.0.5"
     glsl-blend-soft-light "^1.0.5"
     glsl-film-grain "^1.0.4"
-    three "^0.144.0"
+    three "^0.148.0"
 
 csstype@^2.6.8:
   version "2.6.21"
@@ -486,7 +495,7 @@ estree-walker@^2.0.2:
   resolved "https://registry.yarnpkg.com/estree-walker/-/estree-walker-2.0.2.tgz#52f010178c2a4c117a7757cfe942adb7d2da4cac"
   integrity sha512-Rfkk/Mp/DL7JVje3u18FxFujQlTNR2q6QfMSMB7AvCBx91NGj/ba3kCfza0f6dVDbw7YlRf/nDrn7pQrCCyQ/w==
 
-fflate@^0.7.3:
+fflate@^0.7.3, fflate@^0.7.4:
   version "0.7.4"
   resolved "https://registry.yarnpkg.com/fflate/-/fflate-0.7.4.tgz#61587e5d958fdabb5a9368a302c25363f4f69f50"
   integrity sha512-5u2V/CDW15QM1XbbgS+0DfPxVB+jUKhWEKuuFuHncbk3tEEqzmoXL+2KyOFuKGqOnmdIy0/davWF1CkuwtibCw==
@@ -717,10 +726,10 @@ supports-preserve-symlinks-flag@^1.0.0:
   resolved "https://registry.yarnpkg.com/supports-preserve-symlinks-flag/-/supports-preserve-symlinks-flag-1.0.0.tgz#6eda4bd344a3c94aea376d4cc31bc77311039e09"
   integrity sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==
 
-three@^0.144.0:
-  version "0.144.0"
-  resolved "https://registry.yarnpkg.com/three/-/three-0.144.0.tgz#2818517169f8ff94eea5f664f6ff1fcdcd436cc8"
-  integrity sha512-R8AXPuqfjfRJKkYoTQcTK7A6i3AdO9++2n8ubya/GTU+fEHhYKu1ZooRSCPkx69jbnzT7dD/xEo6eROQTt2lJw==
+three@^0.148.0:
+  version "0.148.0"
+  resolved "https://registry.yarnpkg.com/three/-/three-0.148.0.tgz#b6f62f9c84227f8d51c151bf17b67984ded8e4d7"
+  integrity sha512-8uzVV+qhTPi0bOFs/3te3RW6hb3urL8jYEl6irjCWo/l6sr8MPNMcClFev/MMYeIxr0gmDcoXTy/8LXh/LXkfw==
 
 to-regex-range@^5.0.1:
   version "5.0.1"
