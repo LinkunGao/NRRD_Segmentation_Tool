@@ -14,18 +14,22 @@
         <span @click="onMagnificationClick(-0.2)"
           ><img class="image" src="../assets/images/zoom-out.ico" alt=""
         /></span> -->
-        <span @click="onSwitchSliceOrientation('x')"
-          ><img
+        <span @click="onSwitchSliceOrientation('x')">
+          <!-- <img
             class="image"
             src="../assets/images/person_left_view.png"
             alt=""
-        /></span>
-        <span @click="onSwitchSliceOrientation('z')"
-          ><img class="image" src="../assets/images/person_anterior.png" alt=""
-        /></span>
-        <span @click="onSwitchSliceOrientation('y')"
-          ><img class="image" src="../assets/images/person_top_down.png" alt=""
-        /></span>
+        /> -->
+          <i class="switch_font">Sagittal</i>
+        </span>
+        <span @click="onSwitchSliceOrientation('z')">
+          <!-- <img class="image" src="../assets/images/person_anterior.png" alt=""/> -->
+          <i class="switch_font">Axial</i>
+        </span>
+        <span @click="onSwitchSliceOrientation('y')">
+          <!-- <img class="image" src="../assets/images/person_top_down.png" alt=""/> -->
+          <i class="switch_font">Coronal</i>
+        </span>
         <span @click="openDialog">
           <ion-icon name="cloud-upload-outline"></ion-icon>
         </span>
@@ -198,5 +202,12 @@ watchEffect(() => {
 .image {
   width: 1em;
   height: 1em;
+}
+.switch_font {
+  font-size: 0.6em;
+}
+.switch_font:active {
+  font-size: 0.6em;
+  color: #f44336;
 }
 </style>
