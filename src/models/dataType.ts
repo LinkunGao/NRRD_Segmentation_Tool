@@ -1,6 +1,14 @@
-export interface INrrds {
-  count?: number;
+import { type } from "os";
+
+export interface INrrdCaseNames {
+  names: string[];
+  details: Array<IDetails>;
   [proName: string]: any;
+}
+
+export interface IDetails {
+  name: string;
+  masked: false;
 }
 
 export interface IExportMask {
@@ -13,4 +21,19 @@ export interface IExportMask {
   spaceOrigin?: number[];
   data?: number[];
   [proName: string]: any;
+}
+
+export interface IExportMasks {
+  caseId: string;
+  masks: Array<IExportMask>;
+}
+
+export interface IParams {
+  params: unknown;
+  responseType?: string;
+}
+
+export interface ICaseUrls {
+  nrrdUrls: Array<string>;
+  jsonUrl?: string;
 }

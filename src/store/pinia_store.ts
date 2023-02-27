@@ -1,28 +1,44 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { useNrrdFilesCount, useSendMarks } from "@/utils/api";
-import { INrrds, IExportMask } from "@/models/dataType";
+import { useNrrdCaseNames, useInitMarks, useNrrdCase } from "@/utils/api";
+import {
+  INrrdCaseNames,
+  IExportMask,
+  ICaseUrls,
+  IExportMasks,
+} from "@/models/dataType";
 
 export const useFileCountStore = defineStore("filesCount", () => {
-  const count = ref<INrrds>({});
-  const getFilesCountNum = async () => {
-    count.value = await useNrrdFilesCount();
+  const cases = ref<INrrdCaseNames>();
+  const getFilesNames = async () => {
+    cases.value = await useNrrdCaseNames();
   };
-
   return {
-    count,
-    getFilesCountNum,
+    cases,
+    getFilesNames,
   };
 });
 
-export const useSendMarksStore = defineStore("sendMasks", () => {
+export const useNrrdCaseUrlsStore = defineStore("getCaseFiles", () => {
+  const caseUrls = ref<ICaseUrls>([]);
+  const getCaseFileUrls = async (name: string) => {
+    caseUrls.value = await useNrrdCase(name);
+  };
+
+  return {
+    caseUrls,
+    getCaseFileUrls,
+  };
+});
+
+export const useInitMarksStore = defineStore("initMasks", () => {
   const success = ref<boolean>(false);
-  const sendmaksApi = async (body: IExportMask) => {
-    success.value = await useSendMarks(body);
+  const sendInitMask = async (body: IExportMasks) => {
+    success.value = await useInitMarks(body);
   };
 
   return {
     success,
-    sendmaksApi,
+    sendInitMask,
   };
 });
