@@ -1,6 +1,6 @@
 import axios, { type AxiosRequestConfig } from "axios";
 
-const Base_URL = `http://127.0.0.1:8000/`;
+const Base_URL = `http://127.0.0.1:8000/api`;
 axios.defaults.baseURL = Base_URL;
 
 axios.interceptors.request.use((config: AxiosRequestConfig | any) => config);
@@ -18,6 +18,7 @@ axios.interceptors.response.use(
 interface IHttp {
   get<T>(url: string, params?: unknown): Promise<T>;
   post<T>(url: string, body?: unknown): Promise<T>;
+  getZip<T>(url: string, params?: unknown): Promise<T>;
 }
 
 const http: IHttp = {
@@ -25,6 +26,18 @@ const http: IHttp = {
     return new Promise((resolve, reject) => {
       axios
         .get(url, { params })
+        .then((res) => {
+          resolve(res.data);
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    });
+  },
+  getZip(url, params) {
+    return new Promise((resolve, reject) => {
+      axios
+        .get(url, { params, responseType: "blob" })
         .then((res) => {
           resolve(res.data);
         })
