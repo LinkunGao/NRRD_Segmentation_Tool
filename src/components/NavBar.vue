@@ -149,7 +149,7 @@ watchEffect(() => {
 }
 .nav {
   position: fixed;
-  bottom: 10px;
+  bottom: 25px;
   height: 60px;
   width: 100%;
   display: flex;
