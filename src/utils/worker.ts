@@ -10,7 +10,8 @@ addEventListener("message", (event) => {
     data.width,
     data.height,
     data.voxelSpacing,
-    data.spaceOrigin
+    data.spaceOrigin,
+    data.msg
   );
   const len = data.len;
   const width = data.width;
@@ -69,16 +70,10 @@ function restructData(
   width: number,
   height: number,
   voxelSpacing: number[],
-  spaceOrigin: number[]
+  spaceOrigin: number[],
+  msg: string
 ) {
   const reformatData = [];
-
-  let start: unknown = new Date();
-
-  // const copiedArray = deepCopy(originArr) as Copper.paintImageType[];
-
-  let end: unknown = new Date();
-  let timeDiff = (end as number) - (start as number); // time difference in milliseconds
 
   let start_c: unknown = new Date();
   for (let i = 0; i < len; i++) {
@@ -94,14 +89,13 @@ function restructData(
     };
 
     exportTemp.sliceIndex = originArr[i].index;
-
-    const copiedArray = originArr[i].image.data.slice();
-    (exportTemp as any).data = [...copiedArray];
+    if (msg === "save") {
+      const copiedArray = originArr[i].image.data.slice();
+      (exportTemp as any).data = [...copiedArray];
+    }
 
     reformatData.push(exportTemp);
   }
-  let end_c: unknown = new Date();
-  let timeDiff_c = (end_c as number) - (start_c as number);
 
   return reformatData;
 }

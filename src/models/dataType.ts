@@ -28,6 +28,12 @@ export interface IExportMasks {
   masks: Array<IExportMask>;
 }
 
+export interface IReplaceMask {
+  caseId: string;
+  sliceId: number;
+  mask: number[];
+}
+
 export interface IParams {
   params: unknown;
   responseType?: string;

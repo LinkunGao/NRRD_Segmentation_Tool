@@ -22,21 +22,28 @@
       @get-load-files-urls="readyToLoad"
     ></Upload>
   </div>
+  <div>
+    <Logo />
+    <Bottom />
+  </div>
 </template>
 <script setup lang="ts">
 import { GUI } from "dat.gui";
 import * as Copper from "copper3d_visualisation";
 import "copper3d_visualisation/dist/css/style.css";
-import Intro from "./intro.vue";
+import Intro from "./components/intro.vue";
+import Bottom from "./components/bottom.vue";
+import Logo from "../../components/logo.vue";
 import NavBar from "@/components/NavBar.vue";
 import Upload from "@/components/Upload.vue";
 import { onMounted, ref, watchEffect } from "vue";
 import { storeToRefs } from "pinia";
-import { IExportMask, ICaseUrls } from "@/models/dataType";
+import { IExportMask, ICaseUrls, IReplaceMask } from "@/models/dataType";
 import {
   useFileCountStore,
   useNrrdCaseUrlsStore,
   useInitMarksStore,
+  useReplaceMarksStore,
 } from "@/store/pinia_store";
 import { findCurrentCase } from "./tools";
 
@@ -79,6 +86,7 @@ const { getFilesNames } = useFileCountStore();
 const { caseUrls } = storeToRefs(useNrrdCaseUrlsStore());
 const { getCaseFileUrls } = useNrrdCaseUrlsStore();
 const { sendInitMask } = useInitMarksStore();
+const { sendReplaceMask } = useReplaceMarksStore();
 
 // web worker for send masks to backend
 const worker = new Worker(new URL("../../utils/worker.ts", import.meta.url), {
@@ -140,14 +148,14 @@ const resetMainAreaSize = (factor: number) => {
   nrrdTools.setMainAreaSize(factor);
 };
 
-worker.onmessage = function (ev: MessageEvent) {
+worker.onmessage = async function (ev: MessageEvent) {
   const result = ev.data;
   const body = {
     caseId: currentCaseId,
     masks: result.masks as IExportMask[],
   };
   let start_c: unknown = new Date();
-  sendInitMask(body);
+  await sendInitMask(body);
   let end_c: unknown = new Date();
   let timeDiff_c = (end_c as number) - (start_c as number);
   console.log(`axios send Time taken: ${timeDiff_c}ms`);
@@ -170,6 +178,7 @@ const sendMaskToBackend = () => {
       height,
       voxelSpacing,
       spaceOrigin,
+      msg: "init",
     });
   }
 };
@@ -198,14 +207,30 @@ const setMaskData = () => {
       cases.value.details,
       currentCaseId
     );
-    console.log("here");
 
     if (currentCaseDetail.masked) {
-      loadTestJsonMasks(caseUrls.value.jsonUrl as string);
+      if (caseUrls.value) loadTestJsonMasks(caseUrls.value.jsonUrl as string);
     } else {
       sendMaskToBackend();
     }
   }
+};
+
+const getMaskData = async (
+  image: ImageData,
+  sliceId: number,
+  width: number,
+  height: number
+) => {
+  const copyImage = image.data.slice();
+  const mask = [...copyImage];
+  const body: IReplaceMask = {
+    caseId: currentCaseId,
+    sliceId,
+    mask,
+  };
+  await sendReplaceMask(body);
+  console.log("send mask sigle");
 };
 
 watchEffect(() => {
@@ -236,7 +261,7 @@ watchEffect(() => {
         showNumber: true,
         getSliceNum,
       });
-      nrrdTools.draw(scene as Copper.copperScene, gui);
+      nrrdTools.draw(scene as Copper.copperScene, gui, { getMaskData });
       scene?.addPreRenderCallbackFunction(nrrdTools.start);
     } else {
       nrrdTools.redrawMianPreOnDisplayCanvas();
@@ -303,7 +328,8 @@ async function loadModel(name: string) {
         scene.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view.json");
       }
       Copper.setHDRFilePath("/NRRD_Segmentation_Tool/venice_sunset_1k.hdr");
-      scene.updateBackground("#18e5a7", "#ff00ff");
+      // scene.updateBackground("#18e5a7", "#ff00ff");
+      scene.updateBackground("#8b6d96", "#18e5e5");
     }
 
     appRenderer.updateEnvironment();
@@ -312,7 +338,7 @@ async function loadModel(name: string) {
       if (cases.value?.names) {
         currentCaseId = cases.value?.names[0];
         await getCaseFileUrls(cases.value?.names[0]);
-        urls = caseUrls.value.nrrdUrls;
+        if (caseUrls.value) urls = caseUrls.value.nrrdUrls;
         loadAllNrrds(urls);
       }
     }
@@ -372,11 +398,11 @@ function setupGui() {
     .add(state, "switchCase", cases.value?.names as string[])
     .onChange(async (value) => {
       currentCaseId = value;
+      await getInitData();
       await getCaseFileUrls(value);
-      urls = caseUrls.value.nrrdUrls;
+      if (caseUrls.value) urls = caseUrls.value.nrrdUrls;
       readyToLoad(urls);
       loadCases = true;
-      // setMaskData();
     });
 
   selectedContrastFolder = gui.addFolder("select display contrast");

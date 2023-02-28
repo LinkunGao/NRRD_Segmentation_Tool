@@ -4,6 +4,7 @@ import {
   IExportMask,
   ICaseUrls,
   IExportMasks,
+  IReplaceMask,
 } from "@/models/dataType";
 import JSZip from "jszip";
 
@@ -58,7 +59,12 @@ export async function useNrrdCase(name: string): Promise<ICaseUrls> {
   });
 }
 
-export async function useInitMarks(body: IExportMasks) {
+export async function useInitMasks(body: IExportMasks) {
   const success = http.post<boolean>("/mask/init", body);
+  return success;
+}
+
+export async function useReplaceMask(body: IReplaceMask) {
+  const success = http.post<boolean>("/mask/replace", body);
   return success;
 }
