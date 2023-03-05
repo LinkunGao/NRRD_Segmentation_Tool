@@ -66,6 +66,7 @@ let pre_slices = ref();
 let gui = new GUI({ width: 300, autoPlace: false });
 let nrrdTools: Copper.nrrd_tools;
 let loadBarMain: Copper.loadingBarType;
+let loadingContainer: HTMLDivElement, progress: HTMLDivElement;
 let allSlices: Array<any> = [];
 let urls: Array<string> = [];
 
@@ -103,6 +104,10 @@ onMounted(async () => {
   nrrdTools = new Copper.nrrd_tools(nrrd_c.value as HTMLDivElement);
 
   loadBarMain = Copper.loading();
+
+  loadingContainer = loadBarMain.loadingContainer;
+  progress = loadBarMain.progress;
+
   (nrrd_c.value as HTMLDivElement).appendChild(loadBarMain.loadingContainer);
 
   document.addEventListener("keydown", (e) => {
@@ -184,7 +189,6 @@ const sendMaskToBackend = () => {
 };
 
 const loadTestJsonMasks = (url: string) => {
-  let { loadingContainer, progress } = loadBarMain;
   loadingContainer.style.display = "flex";
   progress.innerText = "Loading masks data......";
 
@@ -214,6 +218,11 @@ const setMaskData = () => {
       sendMaskToBackend();
     }
   }
+};
+
+const switchAnimationStatus = (status: "flex" | "none", text?: string) => {
+  loadingContainer.style.display = status;
+  !!text && (progress.innerText = text);
 };
 
 const getMaskData = async (
@@ -336,6 +345,7 @@ async function loadModel(name: string) {
 
     if ((cases.value?.names as string[]).length > 0) {
       if (cases.value?.names) {
+        switchAnimationStatus("flex", "Prepare Nrrd files, please wait......");
         currentCaseId = cases.value?.names[0];
         await getCaseFileUrls(cases.value?.names[0]);
         if (caseUrls.value) urls = caseUrls.value.nrrdUrls;
@@ -346,6 +356,7 @@ async function loadModel(name: string) {
 }
 
 const loadAllNrrds = (urls: Array<string>) => {
+  switchAnimationStatus("none");
   fileNum.value = urls.length;
   allSlices = [];
   const mainPreArea = (
@@ -397,8 +408,10 @@ function setupGui() {
   gui
     .add(state, "switchCase", cases.value?.names as string[])
     .onChange(async (value) => {
+      switchAnimationStatus("flex", "Saving masks data, please wait......");
       currentCaseId = value;
       await getInitData();
+      switchAnimationStatus("flex", "Prepare Nrrd files, please wait......");
       await getCaseFileUrls(value);
       if (caseUrls.value) urls = caseUrls.value.nrrdUrls;
       readyToLoad(urls);
