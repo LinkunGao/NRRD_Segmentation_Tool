@@ -39,15 +39,21 @@ import NavBar from "@/components/NavBar.vue";
 import Upload from "@/components/Upload.vue";
 import { onMounted, ref, watchEffect } from "vue";
 import { storeToRefs } from "pinia";
-import { IExportMask, ICaseUrls, IReplaceMask } from "@/models/dataType";
+import {
+  IExportMask,
+  ICaseUrls,
+  IReplaceMask,
+  ILoadUrls,
+} from "@/models/dataType";
 import {
   useFileCountStore,
   useNrrdCaseUrlsStore,
   useInitMarksStore,
   useReplaceMarksStore,
   useSaveMasksStore,
+  useMaskStore,
 } from "@/store/pinia_store";
-import { findCurrentCase } from "./tools";
+import { findCurrentCase, revokeAppUrls } from "./tools";
 
 let appRenderer: Copper.copperRenderer;
 let max = ref(0);
@@ -71,6 +77,7 @@ let loadBarMain: Copper.loadingBarType;
 let loadingContainer: HTMLDivElement, progress: HTMLDivElement;
 let allSlices: Array<any> = [];
 let urls: Array<string> = [];
+let loadedUrls: ILoadUrls = {};
 
 let filesCount = ref(0);
 let selectedContrastFolder: GUI;
@@ -91,6 +98,8 @@ const { getCaseFileUrls } = useNrrdCaseUrlsStore();
 const { sendInitMask } = useInitMarksStore();
 const { sendReplaceMask } = useReplaceMarksStore();
 const { sendSaveMask } = useSaveMasksStore();
+const { maskBackend } = storeToRefs(useMaskStore());
+const { getMaskDataBackend } = useMaskStore();
 // web worker for send masks to backend
 const worker = new Worker(new URL("../../utils/worker.ts", import.meta.url), {
   type: "module",
@@ -198,7 +207,7 @@ const sendMaskToBackend = () => {
   }
 };
 
-const loadTestJsonMasks = (url: string) => {
+const loadJsonMasks = (url: string) => {
   loadingContainer.style.display = "flex";
   progress.innerText = "Loading masks data......";
 
@@ -216,18 +225,35 @@ const loadTestJsonMasks = (url: string) => {
 };
 
 const setMaskData = () => {
-  if (cases.value) {
-    const currentCaseDetail = findCurrentCase(
-      cases.value.details,
-      currentCaseId
-    );
-
-    if (currentCaseDetail.masked) {
-      if (caseUrls.value) loadTestJsonMasks(caseUrls.value.jsonUrl as string);
-    } else {
-      sendMaskToBackend();
+  if (loadedUrls[currentCaseId]) {
+    if (maskBackend.value) {
+      const data = maskBackend.value as Copper.exportPaintImageType[];
+      nrrdTools.setMasksData(data, loadBarMain);
+    }
+  } else {
+    if (cases.value) {
+      const currentCaseDetail = findCurrentCase(
+        cases.value.details,
+        currentCaseId
+      );
+      if (currentCaseDetail.masked) {
+        if (caseUrls.value) loadJsonMasks(caseUrls.value.jsonUrl as string);
+      } else {
+        sendMaskToBackend();
+      }
     }
   }
+  // if (cases.value) {
+  //   const currentCaseDetail = findCurrentCase(
+  //     cases.value.details,
+  //     currentCaseId
+  //   );
+  //   if (currentCaseDetail.masked) {
+  //     if (caseUrls.value) loadTestJsonMasks(caseUrls.value.jsonUrl as string);
+  //   } else {
+  //     sendMaskToBackend();
+  //   }
+  // }
 };
 
 const switchAnimationStatus = (status: "flex" | "none", text?: string) => {
@@ -281,12 +307,22 @@ watchEffect(() => {
       });
       nrrdTools.draw(scene as Copper.copperScene, gui, { getMaskData });
       scene?.addPreRenderCallbackFunction(nrrdTools.start);
+      const state = {
+        release: () => {
+          revokeAppUrls(loadedUrls);
+          loadedUrls = {};
+        },
+      };
+      let opts = gui.addFolder("opts");
+      opts.add(state, "release");
     } else {
       nrrdTools.redrawMianPreOnDisplayCanvas();
     }
 
     if (loadCases) {
       setMaskData();
+      // every time switch cases, we store it
+      loadedUrls[currentCaseId] = caseUrls.value;
     }
 
     max.value = nrrdTools.getMaxSliceNum()[1];
@@ -357,7 +393,9 @@ async function loadModel(name: string) {
         switchAnimationStatus("flex", "Prepare Nrrd files, please wait......");
         currentCaseId = cases.value?.names[0];
         await getCaseFileUrls(cases.value?.names[0]);
-        if (caseUrls.value) urls = caseUrls.value.nrrdUrls;
+        if (caseUrls.value) {
+          urls = caseUrls.value.nrrdUrls;
+        }
         loadAllNrrds(urls);
       }
     }
@@ -404,6 +442,9 @@ function setupGui() {
     introduction: true,
     showContrast: false,
     switchCase: cases.value?.names[0],
+    release: () => {
+      revokeAppUrls(loadedUrls);
+    },
   };
   gui
     .add(state, "introduction")
@@ -420,14 +461,24 @@ function setupGui() {
       switchAnimationStatus("flex", "Saving masks data, please wait......");
       currentCaseId = value;
       await getInitData();
-      switchAnimationStatus("flex", "Prepare Nrrd files, please wait......");
-      await getCaseFileUrls(value);
-      if (caseUrls.value) urls = caseUrls.value.nrrdUrls;
+      if (loadedUrls[value]) {
+        await getMaskDataBackend(value);
+        urls = loadedUrls[value].nrrdUrls;
+      } else {
+        switchAnimationStatus("flex", "Prepare Nrrd files, please wait......");
+        await getCaseFileUrls(value);
+        if (caseUrls.value) {
+          urls = caseUrls.value.nrrdUrls;
+          // loadedUrls[currentCaseId] = caseUrls.value;
+        }
+      }
       readyToLoad(urls);
       loadCases = true;
     });
 
   selectedContrastFolder = gui.addFolder("select display contrast");
+  // let opts = gui.addFolder("opts");
+  // opts.add(state, "release");
 }
 </script>
 
