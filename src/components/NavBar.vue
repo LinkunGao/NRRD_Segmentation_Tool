@@ -30,6 +30,14 @@
           <!-- <img class="image" src="../assets/images/person_top_down.png" alt=""/> -->
           <i class="switch_font">Coronal</i>
         </span>
+        <span class="save" @click="onSave()">
+          <div>
+            <ion-icon name="save-outline"></ion-icon>
+          </div>
+          <div>
+            <i>save</i>
+          </div>
+        </span>
         <span @click="openDialog">
           <ion-icon name="cloud-upload-outline"></ion-icon>
         </span>
@@ -75,7 +83,12 @@ const emit = defineEmits([
   "resetMainAreaSize",
   "onChangeOrientation",
   "onOpenDialog",
+  "onSave",
 ]);
+
+const onSave = () => {
+  emit("onSave", true);
+};
 
 const openDialog = () => {
   emit("onOpenDialog", true);
@@ -209,5 +222,19 @@ watchEffect(() => {
 .switch_font:active {
   font-size: 0.6em;
   color: #f44336;
+}
+.save {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+.save div {
+  padding: -10px 0;
+  margin: -6px 0;
+}
+.save i {
+  font-size: 0.5em;
 }
 </style>

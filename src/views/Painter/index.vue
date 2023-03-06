@@ -14,6 +14,7 @@
       @on-slice-change="getSliceChangedNum"
       @reset-main-area-size="resetMainAreaSize"
       @on-change-orientation="resetSlicesOrientation"
+      @on-save="onSaveMask"
       @on-open-dialog="onOpenDialog"
     ></NavBar>
     <Upload
@@ -44,6 +45,7 @@ import {
   useNrrdCaseUrlsStore,
   useInitMarksStore,
   useReplaceMarksStore,
+  useSaveMasksStore,
 } from "@/store/pinia_store";
 import { findCurrentCase } from "./tools";
 
@@ -88,7 +90,7 @@ const { caseUrls } = storeToRefs(useNrrdCaseUrlsStore());
 const { getCaseFileUrls } = useNrrdCaseUrlsStore();
 const { sendInitMask } = useInitMarksStore();
 const { sendReplaceMask } = useReplaceMarksStore();
-
+const { sendSaveMask } = useSaveMasksStore();
 // web worker for send masks to backend
 const worker = new Worker(new URL("../../utils/worker.ts", import.meta.url), {
   type: "module",
@@ -129,6 +131,14 @@ const readyToLoad = (urlsArray: Array<string>) => {
   fileNum.value = urlsArray.length;
   urls = urlsArray;
   if (urls.length > 0) loadAllNrrds(urls);
+};
+
+const onSaveMask = async (flag: boolean) => {
+  if (flag) {
+    switchAnimationStatus("flex", "Saving masks data, please wait......");
+    await sendSaveMask();
+    switchAnimationStatus("none");
+  }
 };
 
 const onOpenDialog = (flag: boolean) => {
@@ -239,7 +249,6 @@ const getMaskData = async (
     mask,
   };
   await sendReplaceMask(body);
-  console.log("send mask sigle");
 };
 
 watchEffect(() => {

@@ -5,6 +5,7 @@ import {
   useInitMasks,
   useNrrdCase,
   useReplaceMask,
+  useSaveMasks,
 } from "@/utils/api";
 import {
   INrrdCaseNames,
@@ -58,5 +59,16 @@ export const useReplaceMarksStore = defineStore("replaceMask", () => {
   return {
     success,
     sendReplaceMask,
+  };
+});
+
+export const useSaveMasksStore = defineStore("saveMasks", () => {
+  const success = ref<boolean>(false);
+  const sendSaveMask = async () => {
+    success.value = await useSaveMasks();
+  };
+  return {
+    success,
+    sendSaveMask,
   };
 });
