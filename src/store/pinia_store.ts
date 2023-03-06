@@ -6,6 +6,7 @@ import {
   useNrrdCase,
   useReplaceMask,
   useSaveMasks,
+  useMask,
 } from "@/utils/api";
 import {
   INrrdCaseNames,
@@ -70,5 +71,16 @@ export const useSaveMasksStore = defineStore("saveMasks", () => {
   return {
     success,
     sendSaveMask,
+  };
+});
+
+export const useMaskStore = defineStore("getMasks", () => {
+  const maskBackend = ref<Array<IExportMask>>();
+  const getMaskDataBackend = async (name: string) => {
+    maskBackend.value = await useMask(name);
+  };
+  return {
+    maskBackend,
+    getMaskDataBackend,
   };
 });

@@ -89,7 +89,17 @@ export async function useReplaceMask(body: IReplaceMask) {
   return success;
 }
 
+/**
+ * Save mask
+ * @returns
+ */
+
 export async function useSaveMasks() {
   const success = http.get<boolean>("/mask/save");
   return success;
+}
+
+export async function useMask(name: string) {
+  let mask = http.get<Array<IExportMask>>("/mask", { name });
+  return mask;
 }
