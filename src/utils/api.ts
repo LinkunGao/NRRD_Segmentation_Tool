@@ -8,10 +8,20 @@ import {
 } from "@/models/dataType";
 import JSZip from "jszip";
 
+/**
+ *
+ * @returns Get all cases's names
+ */
 export async function useNrrdCaseNames() {
-  const count = http.get<INrrdCaseNames>("/cases");
-  return count;
+  const names = http.get<INrrdCaseNames>("/cases");
+  return names;
 }
+
+/**
+ *
+ * @param name case name/id
+ * @returns Get all nrrd files in the case folder
+ */
 
 export async function useNrrdCase(name: string): Promise<ICaseUrls> {
   return new Promise((resolve, reject) => {
@@ -59,12 +69,27 @@ export async function useNrrdCase(name: string): Promise<ICaseUrls> {
   });
 }
 
+/**
+ * init the mask data in backend
+ * @param body
+ * @returns
+ */
 export async function useInitMasks(body: IExportMasks) {
   const success = http.post<boolean>("/mask/init", body);
   return success;
 }
 
+/**
+ * replace the specific mask
+ * @param body
+ * @returns
+ */
 export async function useReplaceMask(body: IReplaceMask) {
   const success = http.post<boolean>("/mask/replace", body);
+  return success;
+}
+
+export async function useSaveMasks() {
+  const success = http.get<boolean>("/mask/save");
   return success;
 }
