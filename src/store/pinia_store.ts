@@ -65,8 +65,8 @@ export const useReplaceMarksStore = defineStore("replaceMask", () => {
 
 export const useSaveMasksStore = defineStore("saveMasks", () => {
   const success = ref<boolean>(false);
-  const sendSaveMask = async () => {
-    success.value = await useSaveMasks();
+  const sendSaveMask = async (name: string) => {
+    success.value = await useSaveMasks(name);
   };
   return {
     success,
@@ -75,9 +75,9 @@ export const useSaveMasksStore = defineStore("saveMasks", () => {
 });
 
 export const useMaskStore = defineStore("getMasks", () => {
-  const maskBackend = ref<Array<IExportMask>>();
+  const maskBackend = ref<string>();
   const getMaskDataBackend = async (name: string) => {
-    maskBackend.value = await useMask(name);
+    maskBackend.value = (await useMask(name)) as string;
   };
   return {
     maskBackend,

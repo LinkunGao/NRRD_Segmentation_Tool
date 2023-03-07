@@ -94,12 +94,28 @@ export async function useReplaceMask(body: IReplaceMask) {
  * @returns
  */
 
-export async function useSaveMasks() {
-  const success = http.get<boolean>("/mask/save");
+export async function useSaveMasks(name: string) {
+  const success = http.get<boolean>("/mask/save", { name });
   return success;
 }
 
 export async function useMask(name: string) {
-  let mask = http.get<Array<IExportMask>>("/mask", { name });
-  return mask;
+  return new Promise((resolve, reject) => {
+    http
+      .getZip("/mask", { name })
+      .then((data) => {
+        const jsonUrl = URL.createObjectURL(
+          new Blob([data as BlobPart], { type: "application/json" })
+        );
+        resolve(jsonUrl);
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
 }
+
+// export async function useMask(name: string) {
+//   let mask = http.get<Array<IExportMask>>("/mask", { name });
+//   return mask;
+// }
