@@ -145,7 +145,7 @@ const readyToLoad = (urlsArray: Array<string>) => {
 const onSaveMask = async (flag: boolean) => {
   if (flag) {
     switchAnimationStatus("flex", "Saving masks data, please wait......");
-    await sendSaveMask();
+    await sendSaveMask(currentCaseId);
     switchAnimationStatus("none");
   }
 };
@@ -226,18 +226,14 @@ const loadJsonMasks = (url: string) => {
 
 const setMaskData = () => {
   if (loadedUrls[currentCaseId]) {
-    if (maskBackend.value) {
-      const data = maskBackend.value as Copper.exportPaintImageType[];
-      nrrdTools.setMasksData(data, loadBarMain);
-    }
-  } else {
     if (cases.value) {
       const currentCaseDetail = findCurrentCase(
         cases.value.details,
         currentCaseId
       );
       if (currentCaseDetail.masked) {
-        if (caseUrls.value) loadJsonMasks(caseUrls.value.jsonUrl as string);
+        if (caseUrls.value)
+          loadJsonMasks(loadedUrls[currentCaseId].jsonUrl as string);
       } else {
         sendMaskToBackend();
       }
@@ -321,8 +317,6 @@ watchEffect(() => {
 
     if (loadCases) {
       setMaskData();
-      // every time switch cases, we store it
-      loadedUrls[currentCaseId] = caseUrls.value;
     }
 
     max.value = nrrdTools.getMaxSliceNum()[1];
@@ -395,6 +389,8 @@ async function loadModel(name: string) {
         await getCaseFileUrls(cases.value?.names[0]);
         if (caseUrls.value) {
           urls = caseUrls.value.nrrdUrls;
+          // every time switch cases, we store it
+          loadedUrls[currentCaseId] = caseUrls.value;
         }
         loadAllNrrds(urls);
       }
@@ -462,14 +458,20 @@ function setupGui() {
       currentCaseId = value;
       await getInitData();
       if (loadedUrls[value]) {
+        switchAnimationStatus(
+          "flex",
+          "Prepare and Loading masks data, please wait......"
+        );
+        URL.revokeObjectURL(loadedUrls[value].jsonUrl);
         await getMaskDataBackend(value);
+        loadedUrls[value].jsonUrl = maskBackend.value;
         urls = loadedUrls[value].nrrdUrls;
       } else {
         switchAnimationStatus("flex", "Prepare Nrrd files, please wait......");
         await getCaseFileUrls(value);
         if (caseUrls.value) {
           urls = caseUrls.value.nrrdUrls;
-          // loadedUrls[currentCaseId] = caseUrls.value;
+          loadedUrls[currentCaseId] = caseUrls.value;
         }
       }
       readyToLoad(urls);
