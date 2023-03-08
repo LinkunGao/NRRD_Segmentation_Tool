@@ -186,7 +186,7 @@ worker.onmessage = async function (ev: MessageEvent) {
   console.log("send");
 };
 
-const sendMaskToBackend = () => {
+const sendInitMaskToBackend = () => {
   const masksData = nrrdTools.paintImages.z;
   const dimensions = nrrdTools.getCurrentImageDimension();
   const len = masksData.length;
@@ -235,7 +235,7 @@ const setMaskData = () => {
         if (caseUrls.value)
           loadJsonMasks(loadedUrls[currentCaseId].jsonUrl as string);
       } else {
-        sendMaskToBackend();
+        sendInitMaskToBackend();
       }
     }
   }
@@ -261,7 +261,8 @@ const getMaskData = async (
   image: ImageData,
   sliceId: number,
   width: number,
-  height: number
+  height: number,
+  clearAllFlag?: boolean
 ) => {
   const copyImage = image.data.slice();
   const mask = [...copyImage];
@@ -270,7 +271,11 @@ const getMaskData = async (
     sliceId,
     mask,
   };
-  await sendReplaceMask(body);
+  if (clearAllFlag) {
+    sendInitMaskToBackend();
+  } else {
+    await sendReplaceMask(body);
+  }
 };
 
 watchEffect(() => {
