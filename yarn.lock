@@ -330,10 +330,10 @@ copper3d_plugin_nrrd@^1.2.2:
     fflate "^0.7.4"
     three "^0.148.0"
 
-copper3d_visualisation@^1.13.28:
-  version "1.13.28"
-  resolved "https://registry.yarnpkg.com/copper3d_visualisation/-/copper3d_visualisation-1.13.28.tgz#d66c9a6c1dd5821e63287f2bf96151fd952bd7b7"
-  integrity sha512-aVxa45QK+z8dSxBDnGsubL8TZ/B+tZwW2orYHSQ5yOlJ4AqmXXcqZL2CcRvZc4EoQsBRxq30EoFhASfOMyhTSQ==
+copper3d_visualisation@^1.13.30:
+  version "1.13.30"
+  resolved "https://registry.yarnpkg.com/copper3d_visualisation/-/copper3d_visualisation-1.13.30.tgz#13679838bcbca6fb20c92a7e2d9a6df9e75f78cb"
+  integrity sha512-bmJjHFJyzg4MSvrONousqMau5d30WHEG9ZmJ8VNOkwHnCkmcyuaMpQBTGZG8Yg8RVaiwlZ6aL8kU9QSujWbjLg==
   dependencies:
     "@types/dat.gui" "^0.7.7"
     "@types/three" "^0.140.0"
@@ -726,6 +726,11 @@ mime-types@^2.1.12:
   integrity sha512-ZDY+bPm5zTTF+YpCrAU9nK0UgICYPT0QtT1NZWFv4s++TNkcgVaT0g6+4R2uI4MjQjzysHB1zxuWL50hzaeXiw==
   dependencies:
     mime-db "1.52.0"
+
+mitt@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/mitt/-/mitt-3.0.0.tgz#69ef9bd5c80ff6f57473e8d89326d01c414be0bd"
+  integrity sha512-7dX2/10ITVyqh4aOSVI9gdape+t9l2/8QxHrFmUXu4EEUpdlxl6RudZUPZoc+zuY2hk1j7XxVroIVIan/pD/SQ==
 
 nanoid@^3.3.4:
   version "3.3.4"
