@@ -7,6 +7,7 @@ import {
   useReplaceMask,
   useSaveMasks,
   useMask,
+  useMaskNrrd
 } from "@/utils/api";
 import {
   INrrdCaseNames,
@@ -84,3 +85,14 @@ export const useMaskStore = defineStore("getMasks", () => {
     getMaskDataBackend,
   };
 });
+
+export const useMaskNrrdStore = defineStore("getMaskNrrd",()=>{
+  const maskNrrd = ref<string>();
+  const getMaskNrrd =async (name:string) => {
+    maskNrrd.value = (await useMaskNrrd(name)) as string
+  };
+  return {
+    maskNrrd,
+    getMaskNrrd
+  }
+})

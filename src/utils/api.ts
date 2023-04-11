@@ -26,7 +26,7 @@ export async function useNrrdCaseNames() {
 export async function useNrrdCase(name: string): Promise<ICaseUrls> {
   return new Promise((resolve, reject) => {
     let urls: ICaseUrls = { nrrdUrls: [], jsonUrl: "" };
-    http.getZip("/case", { name }).then((zipBlob) => {
+    http.getBlob("/case", { name }).then((zipBlob) => {
       const zip = new JSZip();
       // Extract the contents of the zip archive
       zip.loadAsync(zipBlob as any).then((contents) => {
@@ -102,12 +102,28 @@ export async function useSaveMasks(name: string) {
 export async function useMask(name: string) {
   return new Promise((resolve, reject) => {
     http
-      .getZip("/mask", { name })
+      .getBlob("/mask", { name })
       .then((data) => {
         const jsonUrl = URL.createObjectURL(
           new Blob([data as BlobPart], { type: "application/json" })
         );
         resolve(jsonUrl);
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
+}
+
+export async function useMaskNrrd(name: string) {
+  return new Promise((resolve, reject) => {
+    http
+      .getBlob("/display", { name })
+      .then((data) => {
+        const maskNrrdUrl = URL.createObjectURL(
+          new Blob([data as BlobPart])
+        );
+        resolve(maskNrrdUrl);
       })
       .catch((error) => {
         reject(error);
