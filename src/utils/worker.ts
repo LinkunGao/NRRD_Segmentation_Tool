@@ -3,6 +3,8 @@ import * as Copper from "copper3d_visualisation";
 addEventListener("message", (event) => {
   const data = event.data;
 
+  console.log("inside worker:", data);
+  
   // 在 Worker 中执行计算量大的代码
   const masks = restructData(
     data.masksData,

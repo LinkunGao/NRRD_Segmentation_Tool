@@ -44,10 +44,10 @@
   resolved "https://registry.yarnpkg.com/@sxzz/popperjs-es/-/popperjs-es-2.11.7.tgz#a7f69e3665d3da9b115f9e71671dae1b97e13671"
   integrity sha512-Ccy0NlLkzr0Ex2FKvh2X+OyERHXJ88XJ1MXtsI9y9fGexlaXaVTPzBCRBwIxFkORuOb+uBqeu+RqnpgYTEZRUQ==
 
-"@types/dat.gui@^0.7.7":
-  version "0.7.7"
-  resolved "https://registry.yarnpkg.com/@types/dat.gui/-/dat.gui-0.7.7.tgz#2125aedfaa190364c5a50b0447858a7e159aea2e"
-  integrity sha512-CxLCme0He5Jk3uQwfO/fGZMyNhb/ypANzqX0yU9lviBQMlen5SOvQTBQ/Cd9x5mFlUAK5Tk8RgvTyLj1nYkz+w==
+"@types/dat.gui@^0.7.9":
+  version "0.7.9"
+  resolved "https://registry.yarnpkg.com/@types/dat.gui/-/dat.gui-0.7.9.tgz#9e16985a0a6b4ef652c53212ee813e5968aff9a8"
+  integrity sha512-UiqZasQIask5cUwWOO6BgOjP1dNj9ChYtmeAb4WTKs5IJ7ha3ATRTeXY7/TzlmEZznh40lS6Ov5BdNA+tU+fWQ==
 
 "@types/lodash-es@^4.17.6":
   version "4.17.6"
@@ -322,30 +322,30 @@ copper3d_plugin_heartjs_config@^1.0.7:
   resolved "https://registry.yarnpkg.com/copper3d_plugin_heartjs_config/-/copper3d_plugin_heartjs_config-1.0.7.tgz#42f72c631c27fe0396dd29bf83888cb996772f33"
   integrity sha512-rWhe19DQjC7Ap96uPKmQNy+IBihXTHelAowr5VdgHee+LDTLTLJ75IHsbBxi5ls1LHMxsXhGmWmT3Oy+pgva+Q==
 
-copper3d_plugin_nrrd@^1.2.2:
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/copper3d_plugin_nrrd/-/copper3d_plugin_nrrd-1.2.2.tgz#1465a7a9fdd327929912c815aad181660bde4562"
-  integrity sha512-Y7jp8c8NEgk4af4lKPM5WLgPoB+DFjrHJzULYqGpYjeph3s4omnDG4SBHE41mDn1ct4TbaKuMY0ZATYHLoIRGg==
+copper3d_plugin_nrrd@^1.3.2:
+  version "1.3.2"
+  resolved "https://registry.yarnpkg.com/copper3d_plugin_nrrd/-/copper3d_plugin_nrrd-1.3.2.tgz#f4954197636ff879df87ea8f43bcfce801ac4778"
+  integrity sha512-vP1rDEDZZWRQGnDfV80Ok/A1WfwLD+04N9az7PE/DRoBiOBEW3ByoLUrrK1Gxsq1Tgt8+uFAavxqynE4u697Qw==
   dependencies:
     fflate "^0.7.4"
     three "^0.148.0"
 
-copper3d_visualisation@^1.13.28:
-  version "1.13.28"
-  resolved "https://registry.yarnpkg.com/copper3d_visualisation/-/copper3d_visualisation-1.13.28.tgz#d66c9a6c1dd5821e63287f2bf96151fd952bd7b7"
-  integrity sha512-aVxa45QK+z8dSxBDnGsubL8TZ/B+tZwW2orYHSQ5yOlJ4AqmXXcqZL2CcRvZc4EoQsBRxq30EoFhASfOMyhTSQ==
+copper3d_visualisation@^1.14.2:
+  version "1.14.2"
+  resolved "https://registry.yarnpkg.com/copper3d_visualisation/-/copper3d_visualisation-1.14.2.tgz#f8d8f940f675daab0421b633752a59cb2265222d"
+  integrity sha512-emPNzxUqU9SA6MnckL+eSNtsLkA+CX2dtfTtex6ajSIuEZg/Mf/0d9wVEtlxfivBhkZSfQPNC73J/KfzFPWvtA==
   dependencies:
-    "@types/dat.gui" "^0.7.7"
+    "@types/dat.gui" "^0.7.9"
     "@types/three" "^0.140.0"
     copper3d_plugin_heart_k "^1.0.14"
-    copper3d_plugin_nrrd "^1.2.2"
+    copper3d_plugin_nrrd "^1.3.2"
     dat.gui "^0.7.9"
     dicom-parser "^1.8.13"
     fflate "^0.7.3"
     file-saver "^2.0.5"
     glsl-blend-soft-light "^1.0.5"
     glsl-film-grain "^1.0.4"
-    three "^0.148.0"
+    three "^0.150.1"
 
 core-util-is@~1.0.0:
   version "1.0.3"
@@ -727,6 +727,11 @@ mime-types@^2.1.12:
   dependencies:
     mime-db "1.52.0"
 
+mitt@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/mitt/-/mitt-3.0.0.tgz#69ef9bd5c80ff6f57473e8d89326d01c414be0bd"
+  integrity sha512-7dX2/10ITVyqh4aOSVI9gdape+t9l2/8QxHrFmUXu4EEUpdlxl6RudZUPZoc+zuY2hk1j7XxVroIVIan/pD/SQ==
+
 nanoid@^3.3.4:
   version "3.3.4"
   resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.4.tgz#730b67e3cd09e2deacf03c027c81c9d9dbc5e8ab"
@@ -882,6 +887,11 @@ three@^0.148.0:
   version "0.148.0"
   resolved "https://registry.yarnpkg.com/three/-/three-0.148.0.tgz#b6f62f9c84227f8d51c151bf17b67984ded8e4d7"
   integrity sha512-8uzVV+qhTPi0bOFs/3te3RW6hb3urL8jYEl6irjCWo/l6sr8MPNMcClFev/MMYeIxr0gmDcoXTy/8LXh/LXkfw==
+
+three@^0.150.1:
+  version "0.150.1"
+  resolved "https://registry.yarnpkg.com/three/-/three-0.150.1.tgz#870d324a4d2daf1c7d55be97f3f73d83783e28be"
+  integrity sha512-5C1MqKUWaHYo13BX0Q64qcdwImgnnjSOFgBscOzAo8MYCzEtqfQqorEKMcajnA3FHy1yVlIe9AmaMQ0OQracNA==
 
 to-regex-range@^5.0.1:
   version "5.0.1"

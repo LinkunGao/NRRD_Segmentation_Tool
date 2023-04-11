@@ -18,7 +18,7 @@ axios.interceptors.response.use(
 interface IHttp {
   get<T>(url: string, params?: unknown): Promise<T>;
   post<T>(url: string, body?: unknown): Promise<T>;
-  getZip<T>(url: string, params?: unknown): Promise<T>;
+  getBlob<T>(url: string, params?: unknown): Promise<T>;
 }
 
 const http: IHttp = {
@@ -34,7 +34,7 @@ const http: IHttp = {
         });
     });
   },
-  getZip(url, params) {
+  getBlob(url, params) {
     return new Promise((resolve, reject) => {
       axios
         .get(url, { params, responseType: "blob" })
