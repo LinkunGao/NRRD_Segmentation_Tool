@@ -9,6 +9,13 @@ export interface INrrdCaseNames {
 export interface IDetails {
   name: string;
   masked: false;
+  has_mesh:boolean;
+}
+
+export interface IStoredMasks{
+  label1: IExportMask[];
+  label2: IExportMask[];
+  label3: IExportMask[];
 }
 
 export interface IExportMask {
@@ -25,12 +32,13 @@ export interface IExportMask {
 
 export interface IExportMasks {
   caseId: string;
-  masks: Array<IExportMask>;
+  masks: IStoredMasks;
 }
 
 export interface IReplaceMask {
   caseId: string;
   sliceId: number;
+  label:string;
   mask: number[];
 }
 
@@ -46,4 +54,9 @@ export interface ICaseUrls {
 
 export interface ILoadUrls {
   [proName: string]: any;
+}
+
+export interface ICaseDetails{
+  currentCaseId:string;
+  details:Array<IDetails>
 }

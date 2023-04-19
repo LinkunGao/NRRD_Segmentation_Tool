@@ -14,23 +14,36 @@
 
 <script setup lang="ts">
 import { GUI } from "dat.gui";
-import * as Copper from "copper3d_visualisation";
-import "copper3d_visualisation/dist/css/style.css";
+import * as THREE from "three";
+// import * as Copper from "copper3d_visualisation";
+// import "copper3d_visualisation/dist/css/style.css";
+import * as Copper from "@/ts/index"
 import { getCurrentInstance, onMounted, ref } from "vue";
 import emitter from "@/utils/bus";
 import { storeToRefs } from "pinia";
 import {
-  useMaskNrrdStore
+  useMaskNrrdStore,
+  useMaskMeshObjStore
 } from "@/store/pinia_store";
+import {
+  ICaseDetails
+} from "@/models/dataType"
+import {findCurrentCase} from "../tools"
 let refs = null;
 let bg: HTMLDivElement = ref<any>(null);
 let appRenderer: Copper.copperRenderer;
 let c_gui: HTMLDivElement = ref<any>(null);
 let loadBar1: Copper.loadingBarType;
 let casename: string
+let oldMeshes: Array<THREE.Object3D> = []
+let copperScene: Copper.copperScene
+let socket = new WebSocket("ws://127.0.0.1:8000/ws");
+let timer
 
 const { maskNrrd } = storeToRefs(useMaskNrrdStore());
 const { getMaskNrrd } = useMaskNrrdStore();
+const { maskMeshObj } = storeToRefs(useMaskMeshObjStore());
+const { getMaskMeshObj } = useMaskMeshObjStore();
 
 onMounted(() => {
   let { $refs } = (getCurrentInstance() as any).proxy;
@@ -38,6 +51,17 @@ onMounted(() => {
   bg = refs.base_container_2;
   c_gui = refs.c_gui;
 
+  socket.onopen = function (e){
+    console.log("socket send...");
+    socket.send("Frontend socket connect!")
+  }
+  timer = requestUpdateMesh()
+  socket.onmessage = function (event){
+    const blob = new Blob([event.data], {type:"model/obj"})
+    const url = URL.createObjectURL(blob)
+    maskMeshObj.value = url
+    loadNrrd(maskNrrd.value as string,maskMeshObj.value as string, c_gui);
+  }
 
   appRenderer = new Copper.copperRenderer(bg);
 
@@ -45,9 +69,23 @@ onMounted(() => {
 
   appRenderer.container.appendChild(loadBar1.loadingContainer);
 
+  initScene("display_nrrd");
 
-  emitter.on("casename", (current_casename) => {
-    casename = current_casename as string
+  emitter.on("casename", async (case_details) => {
+    const case_infos:ICaseDetails = (case_details as ICaseDetails)
+    const case_detail = findCurrentCase(
+        case_infos.details,
+        case_infos.currentCaseId
+      );
+    
+    casename = case_infos.currentCaseId;
+    await getMaskNrrd(casename);
+    if(case_detail.has_mesh){
+      await getMaskMeshObj(casename);
+      loadNrrd(maskNrrd.value as string,maskMeshObj.value as string, c_gui);
+    }else{
+      loadNrrd(maskNrrd.value as string,"", c_gui);
+    } 
   })
   appRenderer.animate();
 });
@@ -55,63 +93,112 @@ onMounted(() => {
 async function getMaskNrrdHandle() {
   if (casename) {
     await getMaskNrrd(casename);
-    loadNrrd(maskNrrd.value as string,"/NRRD_Segmentation_Tool/mesh_spacing.obj", "nrrd0", c_gui);
+    loadNrrd(maskNrrd.value as string,"/NRRD_Segmentation_Tool/mask.obj", c_gui);
+  }
+}
+
+function requestUpdateMesh(){
+ const intervalId = setInterval(()=>{
+    socket.send("Frontend socket connect!")
+  }, 3000)
+ return intervalId
+}
+
+function initScene(name:string){
+  copperScene = appRenderer.getSceneByName(name) as Copper.copperScene;
+  if (copperScene == undefined) {
+    copperScene = appRenderer.createScene(name) as Copper.copperScene;
+    appRenderer.setCurrentScene(copperScene);
+    copperScene.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view.json");
+      emitter.on("resize", () => {
+        copperScene?.onWindowResize();
+      });
+      copperScene.updateBackground("#8b6d96", "#18e5e5");
+    Copper.setHDRFilePath("venice_sunset_1k.hdr");
+    appRenderer.updateEnvironment();
   }
 }
 
 
-function loadNrrd(url: string,url_1:string, name: string, c_gui: any) {
-  let scene = appRenderer.getSceneByName(name) as Copper.copperScene;
-  if (scene == undefined) {
-    scene = appRenderer.createScene(name) as Copper.copperScene;
-    appRenderer.setCurrentScene(scene);
+function loadNrrd(url: string,url_1:string, c_gui: any) {
+  removeOldMeshes()
     const opts: Copper.optsType = {
       openGui: true,
       container: c_gui,
     };
-
-
-    const funa = (
+    if (!!copperScene) {
+      const nrrdCallback = (
       volume: any,
       nrrdMesh: Copper.nrrdMeshesType,
       nrrdSlices: Copper.nrrdSliceType,
       gui?: GUI
     ) => {
 
-      const origin = volume.header.space_origin.map((num:any)=>Number(num));
-      const spacing = volume.spacing;
-      const ras = volume.RASDimensions;
-      
-      const x_bias = - ( origin[0] * 2 + ras[0] ) / 2;
-      const y_bias = - ( origin[1] * 2 + ras[1] ) / 2;
-      const z_bias = - ( origin[2] * 2 + ras[2] ) / 2;
-      (gui as GUI).closed = true;
-      scene.addObject(nrrdMesh.x);
-      scene.addObject(nrrdMesh.y);
-      scene.addObject(nrrdMesh.z);
-      scene.controls.rotateSpeed = 1.5;
+        const origin = volume.header.space_origin.map((num:any)=>Number(num));
+        const spacing = volume.spacing;
+        const ras = volume.RASDimensions;
+        
+        const x_bias = - ( origin[0] * 2 + ras[0] ) / 2;
+        const y_bias = - ( origin[1] * 2 + ras[1] ) / 2;
+        const z_bias = - ( origin[2] * 2 + ras[2] ) / 2;
+        (gui as GUI).closed = true;
+        copperScene.addObject(nrrdMesh.x);
+        copperScene.addObject(nrrdMesh.y);
+        copperScene.addObject(nrrdMesh.z);
+        oldMeshes.push(nrrdMesh.x,nrrdMesh.y,nrrdMesh.z)
+        copperScene.controls.rotateSpeed = 1.5;
+    
+        if(url_1){
+          copperScene.loadOBJ(url_1, (content)=>{
+            oldMeshes.push(content)
+            content.position.set(x_bias, y_bias, z_bias);
+            
+           
+            content.position.set(x_bias, y_bias, z_bias);
+            const box = new THREE.Box3().setFromObject(content);
+            const size = box.getSize(new THREE.Vector3()).length();
+            const center = box.getCenter(new THREE.Vector3());
+            
+            // reset nrrd slice
+            nrrdSlices.x.index = nrrdSlices.x.RSAMaxIndex/2 + center.x
+            nrrdSlices.y.index = nrrdSlices.y.RSAMaxIndex/2 + center.y
+            nrrdSlices.z.index = nrrdSlices.z.RSAMaxIndex/2 + center.z
+            nrrdSlices.x.repaint.call(nrrdSlices.x);
+            nrrdSlices.y.repaint.call(nrrdSlices.y);
+            nrrdSlices.z.repaint.call(nrrdSlices.z);
+            
+            (gui as GUI).add(content.position as any,"x").max(500).min(-500).step(1);
+            (gui as GUI).add(content.position as any,"y").max(500).min(-500).step(1);
 
-      scene.loadOBJ(url_1, (content)=>{
+            
+            // bg.onclick = (ev)=>{
+            //   const x = ev.offsetX;
+            //   const y = ev.offsetY;
+            //   const p = copperScene.pickSpecifiedModel([nrrdMesh.x,nrrdMesh.y,nrrdMesh.z],{x,y})
+            //   console.log(p);
+              
+            // }
 
-          content.position.set(x_bias, y_bias, z_bias);
-          (gui as GUI).add(content.position as any,"x").max(500).min(-500).step(1);
-          (gui as GUI).add(content.position as any,"y").max(500).min(-500).step(1);
-         
-      })
-      
-    };
-    if (scene) {
-      scene?.loadNrrd(url, loadBar1,true, funa, opts);
+          })
+        }
+      };
 
-      scene.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view.json");
-      emitter.on("resize", () => {
-        scene?.onWindowResize();
-      });
+      (copperScene as Copper.copperScene).loadNrrd(url, loadBar1,true, nrrdCallback, opts);
     }
+}
 
-    scene.updateBackground("#766", "#000");
-    Copper.setHDRFilePath("venice_sunset_1k.hdr");
-    appRenderer.updateEnvironment();
+// function setSlicePosition(nrrdSlices:any, center:THREE.Vector3){
+//   nrrdSlices.x.index = nrrdSlices.x.RSAMaxIndex/2 + center.x
+//   nrrdSlices.y.index = nrrdSlices.y.RSAMaxIndex/2 + center.y
+//   nrrdSlices.z.index = nrrdSlices.z.RSAMaxIndex/2 + center.z
+//   nrrdSlices.x.repaint.call(nrrdSlices.x);
+//   nrrdSlices.y.repaint.call(nrrdSlices.y);
+//   nrrdSlices.z.repaint.call(nrrdSlices.z);
+// }
+
+function removeOldMeshes(){
+  if(!!copperScene){
+    (copperScene as Copper.copperScene).scene.remove(...oldMeshes)
   }
 }
 </script>

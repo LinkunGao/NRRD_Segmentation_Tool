@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import path from "path";
+import glslify from "rollup-plugin-glslify";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -13,6 +14,14 @@ export default defineConfig({
           },
         },
       },
+    }),
+    glslify({
+      // Default
+      include: ["**/*.vs", "**/*.fs", "**/*.vert", "**/*.frag", "**/*.glsl"],
+      // Undefined by default
+      exclude: "node_modules/**",
+      // Compress shader by default using logic from rollup-plugin-glsl
+      compress: true,
     }),
   ],
   resolve: {

@@ -32,6 +32,7 @@
 import { GUI } from "dat.gui";
 import * as Copper from "copper3d_visualisation";
 import "copper3d_visualisation/dist/css/style.css";
+// import * as Copper from "@/ts/index"
 import Intro from "./intro.vue";
 import Bottom from "./bottom.vue";
 import Logo from "@/components/logo.vue";
@@ -39,7 +40,7 @@ import NavBar from "@/components/NavBar.vue";
 import Upload from "@/components/Upload.vue";
 import { onMounted, ref, watchEffect } from "vue";
 import { storeToRefs } from "pinia";
-import { IExportMask, IReplaceMask, ILoadUrls } from "@/models/dataType";
+import { IStoredMasks, IReplaceMask, ILoadUrls } from "@/models/dataType";
 import {
   useFileCountStore,
   useNrrdCaseUrlsStore,
@@ -173,7 +174,7 @@ worker.onmessage = async function (ev: MessageEvent) {
   const result = ev.data;
   const body = {
     caseId: currentCaseId,
-    masks: result.masks as IExportMask[],
+    masks: result.masks as IStoredMasks,
   };
   let start_c: unknown = new Date();
   await sendInitMask(body);
@@ -184,9 +185,14 @@ worker.onmessage = async function (ev: MessageEvent) {
 };
 
 const sendInitMaskToBackend = () => {
-  const masksData = nrrdTools.paintImages.z;
+  // const masksData = nrrdTools.paintImages.z;
+  const masksData = {
+    label1: nrrdTools.paintImagesLabel1.z,
+    label2: nrrdTools.paintImagesLabel2.z,
+    label3: nrrdTools.paintImagesLabel3.z,
+  };
   const dimensions = nrrdTools.getCurrentImageDimension();
-  const len = masksData.length;
+  const len = nrrdTools.paintImages.z.length;
   const width = dimensions[0];
   const height = dimensions[1];
   const voxelSpacing = nrrdTools.getVoxelSpacing();
@@ -221,6 +227,7 @@ const loadJsonMasks = (url: string) => {
 
         sendInitMaskToBackend();
       }
+      
       nrrdTools.setMasksData(data, loadBarMain);
     }
   };
@@ -252,15 +259,18 @@ const switchAnimationStatus = (status: "flex" | "none", text?: string) => {
 const getMaskData = async (
   image: ImageData,
   sliceId: number,
+  label:string,
   width: number,
   height: number,
   clearAllFlag?: boolean
 ) => {
   const copyImage = image.data.slice();
+
   const mask = [...copyImage];
   const body: IReplaceMask = {
     caseId: currentCaseId,
     sliceId,
+    label,
     mask,
   };
   
@@ -388,7 +398,8 @@ async function loadModel(name: string) {
       if (cases.value?.names) {
         switchAnimationStatus("flex", "Prepare Nrrd files, please wait......");
         currentCaseId = cases.value?.names[0];
-        emitter.emit("casename", currentCaseId)
+        const details = cases.value?.details
+        emitter.emit("casename", {currentCaseId,details})
         await getCaseFileUrls(cases.value?.names[0]);
         if (caseUrls.value) {
           urls = caseUrls.value.nrrdUrls;
@@ -461,8 +472,9 @@ function setupGui() {
     .onChange(async (value) => {
       switchAnimationStatus("flex", "Saving masks data, please wait......");
       currentCaseId = value;
-      emitter.emit("casename", currentCaseId)
       await getInitData();
+      const details = cases.value?.details
+      emitter.emit("casename", {currentCaseId,details})
       if (loadedUrls[value]) {
         switchAnimationStatus(
           "flex",

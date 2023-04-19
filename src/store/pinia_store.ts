@@ -7,7 +7,8 @@ import {
   useReplaceMask,
   useSaveMasks,
   useMask,
-  useMaskNrrd
+  useMaskNrrd,
+  useMaskObjMesh
 } from "@/utils/api";
 import {
   INrrdCaseNames,
@@ -94,5 +95,16 @@ export const useMaskNrrdStore = defineStore("getMaskNrrd",()=>{
   return {
     maskNrrd,
     getMaskNrrd
+  }
+})
+
+export const useMaskMeshObjStore = defineStore("getMaskMesh",()=>{
+  const maskMeshObj = ref<string>();
+  const getMaskMeshObj =async (name:string) => {
+    maskMeshObj.value = (await useMaskObjMesh(name)) as string
+  };
+  return {
+    maskMeshObj,
+    getMaskMeshObj
   }
 })
