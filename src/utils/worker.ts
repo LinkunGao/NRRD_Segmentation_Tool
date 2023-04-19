@@ -3,18 +3,23 @@ import * as Copper from "copper3d_visualisation";
 addEventListener("message", (event) => {
   const data = event.data;
 
-  console.log("inside worker:", data);
-  
   // 在 Worker 中执行计算量大的代码
-  const masks = restructData(
-    data.masksData,
-    data.len,
-    data.width,
-    data.height,
-    data.voxelSpacing,
-    data.spaceOrigin,
-    data.msg
-  );
+
+  let masks: any = {};
+
+  for (let i = 1; i < 4; i++) {
+    const labelMask = restructData(
+      data.masksData[`label${i}`],
+      data.len,
+      data.width,
+      data.height,
+      data.voxelSpacing,
+      data.spaceOrigin,
+      data.msg
+    );
+    masks[`label${i}`] = labelMask;
+  }
+
   const len = data.len;
   const width = data.width;
   const height = data.height;
@@ -78,6 +83,7 @@ function restructData(
   const reformatData = [];
 
   let start_c: unknown = new Date();
+
   for (let i = 0; i < len; i++) {
     let exportTemp = {
       sliceIndex: 0,
@@ -90,7 +96,8 @@ function restructData(
       data: [],
     };
 
-    exportTemp.sliceIndex = originArr[i].index;
+    exportTemp.sliceIndex = i;
+
     if (msg === "save") {
       const copiedArray = originArr[i].image.data.slice();
       (exportTemp as any).data = [...copiedArray];

@@ -131,6 +131,22 @@ export async function useMaskNrrd(name: string) {
   });
 }
 
+export async function useMaskObjMesh(name: string) {
+  return new Promise((resolve, reject) => {
+    http
+      .getBlob("/mesh", { name })
+      .then((data) => {
+        const maskMeshObjUrl = URL.createObjectURL(
+          new Blob([data as BlobPart])
+        );
+        resolve(maskMeshObjUrl);
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
+}
+
 // export async function useMask(name: string) {
 //   let mask = http.get<Array<IExportMask>>("/mask", { name });
 //   return mask;

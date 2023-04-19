@@ -2,6 +2,7 @@ import { ILoadUrls } from "@/models/dataType";
 type ITemp = {
   name: string;
   masked: boolean;
+  has_mesh:boolean;
 };
 
 export function findCurrentCase(caseDetail: ITemp[], currentCaseName: string) {
