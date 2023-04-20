@@ -8,16 +8,16 @@
       <div class="nipple"><span>Nipple:</span> <span>L: 53 mm</span></div>
     </div>
     <div ref="c_gui" id="gui"></div>
-    <button class="btn" @click="getMaskNrrdHandle">load mask</button>
+    <!-- <button class="btn" @click="getMaskNrrdHandle">load mask</button> -->
   </div>
 </template>
 
 <script setup lang="ts">
 import { GUI } from "dat.gui";
 import * as THREE from "three";
-// import * as Copper from "copper3d_visualisation";
-// import "copper3d_visualisation/dist/css/style.css";
-import * as Copper from "@/ts/index"
+import * as Copper from "copper3d_visualisation";
+import "copper3d_visualisation/dist/css/style.css";
+// import * as Copper from "@/ts/index"
 import { getCurrentInstance, onMounted, ref } from "vue";
 import emitter from "@/utils/bus";
 import { storeToRefs } from "pinia";
@@ -38,7 +38,7 @@ let casename: string
 let oldMeshes: Array<THREE.Object3D> = []
 let copperScene: Copper.copperScene
 let socket = new WebSocket("ws://127.0.0.1:8000/ws");
-let timer
+let timer:NodeJS.Timer
 
 const { maskNrrd } = storeToRefs(useMaskNrrdStore());
 const { getMaskNrrd } = useMaskNrrdStore();
@@ -55,12 +55,18 @@ onMounted(() => {
     console.log("socket send...");
     socket.send("Frontend socket connect!")
   }
-  timer = requestUpdateMesh()
+  
   socket.onmessage = function (event){
-    const blob = new Blob([event.data], {type:"model/obj"})
-    const url = URL.createObjectURL(blob)
-    maskMeshObj.value = url
-    loadNrrd(maskNrrd.value as string,maskMeshObj.value as string, c_gui);
+    if(event.data !== "delete"){
+      const blob = new Blob([event.data], {type:"model/obj"})
+      const url = URL.createObjectURL(blob)
+      maskMeshObj.value = url
+      loadNrrd(maskNrrd.value as string, maskMeshObj.value as string, c_gui);
+    }else{
+      loadNrrd(maskNrrd.value as string,"", c_gui);
+    }
+    
+    clearInterval(timer as NodeJS.Timer)
   }
 
   appRenderer = new Copper.copperRenderer(bg);
@@ -70,6 +76,10 @@ onMounted(() => {
   appRenderer.container.appendChild(loadBar1.loadingContainer);
 
   initScene("display_nrrd");
+
+  emitter.on("saveMesh", ()=>{
+    timer = requestUpdateMesh()
+  })
 
   emitter.on("casename", async (case_details) => {
     const case_infos:ICaseDetails = (case_details as ICaseDetails)
@@ -90,12 +100,12 @@ onMounted(() => {
   appRenderer.animate();
 });
 
-async function getMaskNrrdHandle() {
-  if (casename) {
-    await getMaskNrrd(casename);
-    loadNrrd(maskNrrd.value as string,"/NRRD_Segmentation_Tool/mask.obj", c_gui);
-  }
-}
+// async function getMaskNrrdHandle() {
+//   if (casename) {
+//     await getMaskNrrd(casename);
+//     loadNrrd(maskNrrd.value as string,"/NRRD_Segmentation_Tool/mask.obj", c_gui);
+//   }
+// }
 
 function requestUpdateMesh(){
  const intervalId = setInterval(()=>{

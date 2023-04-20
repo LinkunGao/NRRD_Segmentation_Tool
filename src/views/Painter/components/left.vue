@@ -48,6 +48,7 @@ import {
   useReplaceMarksStore,
   useSaveMasksStore,
   useMaskStore,
+  useClearMaskMeshStore
 } from "@/store/pinia_store";
 import { findCurrentCase, revokeAppUrls } from "../tools";
 import emitter from "@/utils/bus";
@@ -97,6 +98,7 @@ const { sendReplaceMask } = useReplaceMarksStore();
 const { sendSaveMask } = useSaveMasksStore();
 const { maskBackend } = storeToRefs(useMaskStore());
 const { getMaskDataBackend } = useMaskStore();
+const { clearMaskMeshObj } = useClearMaskMeshStore();
 // web worker for send masks to backend
 const worker = new Worker(new URL("../../../utils/worker.ts", import.meta.url), {
   type: "module",
@@ -144,6 +146,7 @@ const onSaveMask = async (flag: boolean) => {
     switchAnimationStatus("flex", "Saving masks data, please wait......");
     await sendSaveMask(currentCaseId);
     switchAnimationStatus("none");
+    emitter.emit("saveMesh", true);
   }
 };
 
@@ -275,6 +278,7 @@ const getMaskData = async (
   };
   
   if (clearAllFlag) {
+    clearMaskMeshObj(currentCaseId);
     sendInitMaskToBackend();
   } else {
     await sendReplaceMask(body);
