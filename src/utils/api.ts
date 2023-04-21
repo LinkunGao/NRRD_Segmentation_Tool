@@ -147,7 +147,14 @@ export async function useMaskObjMesh(name: string) {
   });
 }
 
+export async function useClearMaskMesh(name: string) {
+
+  let res = http.get<string>("/clearmesh", { name });
+  return res;
+}
+
 // export async function useMask(name: string) {
 //   let mask = http.get<Array<IExportMask>>("/mask", { name });
 //   return mask;
 // }
+
