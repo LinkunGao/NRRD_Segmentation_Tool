@@ -197,15 +197,6 @@ function loadNrrd(url: string,url_1:string, c_gui: any) {
     }
 }
 
-// function setSlicePosition(nrrdSlices:any, center:THREE.Vector3){
-//   nrrdSlices.x.index = nrrdSlices.x.RSAMaxIndex/2 + center.x
-//   nrrdSlices.y.index = nrrdSlices.y.RSAMaxIndex/2 + center.y
-//   nrrdSlices.z.index = nrrdSlices.z.RSAMaxIndex/2 + center.z
-//   nrrdSlices.x.repaint.call(nrrdSlices.x);
-//   nrrdSlices.y.repaint.call(nrrdSlices.y);
-//   nrrdSlices.z.repaint.call(nrrdSlices.z);
-// }
-
 function removeOldMeshes(){
   if(!!copperScene){
     (copperScene as Copper.copperScene).scene.remove(...oldMeshes)
