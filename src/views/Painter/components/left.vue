@@ -50,8 +50,9 @@ import {
   useMaskStore,
   useClearMaskMeshStore
 } from "@/store/pinia_store";
-import { findCurrentCase, revokeAppUrls } from "../tools";
+import { findCurrentCase, revokeAppUrls, getEraserUrlsForOffLine } from "../tools";
 import emitter from "@/utils/bus";
+
 
 let appRenderer: Copper.copperRenderer;
 let max = ref(0);
@@ -104,6 +105,8 @@ const worker = new Worker(new URL("../../../utils/worker.ts", import.meta.url), 
   type: "module",
 });
 
+const eraserUrls = getEraserUrlsForOffLine();
+
 onMounted(async () => {
   await getInitData();
   c_gui.value?.appendChild(gui.domElement);
@@ -112,6 +115,8 @@ onMounted(async () => {
   );
 
   nrrdTools = new Copper.nrrd_tools(nrrd_c.value as HTMLDivElement);
+  // for offline working
+  nrrdTools.setEraserUrls(urls);
 
   loadBarMain = Copper.loading();
 
