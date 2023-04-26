@@ -1,6 +1,6 @@
 <template>
   <div id="bg_2" ref="base_container_2">
-    <div ref="loading_c" class="loading"></div>
+    <div v-show="openLoading" ref="loading_c" class="loading"></div>
     <div class="value-panel">
       <div><span>Tumor volume:</span> <span>112</span></div>
       <div><span>Tumor extent:</span> <span>71</span></div>
@@ -43,6 +43,7 @@ let socket = new WebSocket("ws://127.0.0.1:8000/ws");
 let loadBarMain: Copper.loadingBarType;
 let loadingContainer: HTMLDivElement;
 let timer:NodeJS.Timer
+let openLoading = ref(false);
 
 const { maskNrrd } = storeToRefs(useMaskNrrdStore());
 const { getMaskNrrd } = useMaskNrrdStore();
@@ -60,7 +61,6 @@ onMounted(() => {
   loadingContainer = loadBarMain.loadingContainer;
   (loading_c.value as HTMLDivElement).appendChild(loadingContainer);
   
-
   socket.onopen = function (e){
     console.log("socket send...");
     socket.send("Frontend socket connect!")
@@ -73,6 +73,7 @@ onMounted(() => {
       maskMeshObj.value = url
       loadNrrd(maskNrrd.value as string, maskMeshObj.value as string, c_gui);
       loadingContainer.style.display = "none";
+      openLoading.value = false;
     }else{
       loadNrrd(maskNrrd.value as string,"", c_gui);
     }
@@ -90,6 +91,7 @@ onMounted(() => {
 
   emitter.on("saveMesh", ()=>{
     loadingContainer.style.display = "flex";
+    openLoading.value = true;
     timer = requestUpdateMesh()
   })
 
