@@ -17,7 +17,9 @@ import {
   ICaseUrls,
   IExportMasks,
   IReplaceMask,
+  IMaskMesh
 } from "@/models/dataType";
+import { type } from "os";
 
 export const useFileCountStore = defineStore("filesCount", () => {
   const cases = ref<INrrdCaseNames>();
@@ -100,9 +102,10 @@ export const useMaskNrrdStore = defineStore("getMaskNrrd",()=>{
 })
 
 export const useMaskMeshObjStore = defineStore("getMaskMesh",()=>{
-  const maskMeshObj = ref<string>();
+  
+  const maskMeshObj = ref<IMaskMesh>({});
   const getMaskMeshObj =async (name:string) => {
-    maskMeshObj.value = (await useMaskObjMesh(name)) as string
+    maskMeshObj.value = (await useMaskObjMesh(name)) as IMaskMesh
   };
   return {
     maskMeshObj,

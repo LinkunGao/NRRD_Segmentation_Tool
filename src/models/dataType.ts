@@ -16,6 +16,7 @@ export interface IStoredMasks{
   label1: IExportMask[];
   label2: IExportMask[];
   label3: IExportMask[];
+  hasData:false;
 }
 
 export interface IExportMask {
@@ -40,6 +41,11 @@ export interface IReplaceMask {
   sliceId: number;
   label:string;
   mask: number[];
+}
+
+export interface IMaskMesh {
+  maskMeshObjUrl?: string;
+  meshVolume?:number;
 }
 
 export interface IParams {

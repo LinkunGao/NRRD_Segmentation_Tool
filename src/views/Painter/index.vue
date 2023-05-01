@@ -61,6 +61,7 @@ onMounted(() => {
   height: 100vh;
   overflow: hidden;
   position: relative;
+  user-select: none;
   /* 使 .split-bar 的 left 值相对于 .split-container 定位 */
 }
 

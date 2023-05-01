@@ -2,8 +2,8 @@
   <div id="bg_2" ref="base_container_2">
     <div v-show="openLoading" ref="loading_c" class="loading"></div>
     <div class="value-panel">
-      <div><span>Tumor volume:</span> <span>112</span></div>
-      <div><span>Tumor extent:</span> <span>71</span></div>
+      <div><span>Tumuor volume:</span> <span>{{ volume }}</span></div>
+      <div><span>Tumuor extent:</span> <span>71</span></div>
       <div class="skin"><span>Skin:</span> <span>27 mm</span></div>
       <div class="ribcage"><span>Ribcage:</span> <span>36 mm</span></div>
       <div class="nipple"><span>Nipple:</span> <span>L: 53 mm</span></div>
@@ -44,6 +44,12 @@ let loadBarMain: Copper.loadingBarType;
 let loadingContainer: HTMLDivElement;
 let timer:NodeJS.Timer
 let openLoading = ref(false);
+let volume = ref(0)
+let guiState = {
+  Sagittal: true,
+  Axial: true,
+  Coronal: true
+}
 
 const { maskNrrd } = storeToRefs(useMaskNrrdStore());
 const { getMaskNrrd } = useMaskNrrdStore();
@@ -67,18 +73,24 @@ onMounted(() => {
   }
   
   socket.onmessage = function (event){
-    if(event.data !== "delete"){
+    if(typeof event.data === "string"){
+      if(event.data === "delete"){
+        volume.value = 0;
+        loadNrrd(maskNrrd.value as string,"", c_gui);
+      }else{
+        const volumeJson = JSON.parse(event.data)
+        volume.value = Math.ceil(volumeJson.volume)
+      }
+      clearInterval(timer as NodeJS.Timer)
+    }else{
       const blob = new Blob([event.data], {type:"model/obj"})
       const url = URL.createObjectURL(blob)
-      maskMeshObj.value = url
-      loadNrrd(maskNrrd.value as string, maskMeshObj.value as string, c_gui);
+      maskMeshObj.value.maskMeshObjUrl = url
+      loadNrrd(maskNrrd.value as string, maskMeshObj.value.maskMeshObjUrl as string, c_gui);
       loadingContainer.style.display = "none";
-      openLoading.value = false;
-    }else{
-      loadNrrd(maskNrrd.value as string,"", c_gui);
     }
+    openLoading.value = false;
     
-    clearInterval(timer as NodeJS.Timer)
   }
 
   appRenderer = new Copper.copperRenderer(bg);
@@ -106,7 +118,9 @@ onMounted(() => {
     await getMaskNrrd(casename);
     if(case_detail.has_mesh){
       await getMaskMeshObj(casename);
-      loadNrrd(maskNrrd.value as string,maskMeshObj.value as string, c_gui);
+      volume.value = Math.ceil(maskMeshObj.value.meshVolume as number)
+      loadNrrd(maskNrrd.value as string, maskMeshObj.value.maskMeshObjUrl as string, c_gui);
+      // loadNrrd(maskNrrd.value as string, "/NRRD_Segmentation_Tool/mesh_spacing.obj" as string, c_gui);
     }else{
       loadNrrd(maskNrrd.value as string,"", c_gui);
     } 
@@ -124,7 +138,7 @@ onMounted(() => {
 function requestUpdateMesh(){
  const intervalId = setInterval(()=>{
     socket.send("Frontend socket connect!")
-  }, 3000)
+  }, 1000);
  return intervalId
 }
 
@@ -162,10 +176,23 @@ function loadNrrd(url: string,url_1:string, c_gui: any) {
         const spacing = volume.spacing;
         const ras = volume.RASDimensions;
         
+        
         const x_bias = - ( origin[0] * 2 + ras[0] ) / 2;
         const y_bias = - ( origin[1] * 2 + ras[1] ) / 2;
         const z_bias = - ( origin[2] * 2 + ras[2] ) / 2;
         (gui as GUI).closed = true;
+        gui?.add(guiState, "Axial").onChange((flag)=>{
+          nrrdMesh.z.visible = flag
+        })
+        gui?.add(guiState, "Sagittal").onChange((flag)=>{
+          nrrdMesh.x.visible = flag
+        })
+        gui?.add(guiState, "Coronal").onChange((flag)=>{
+          nrrdMesh.y.visible = flag
+        })
+        nrrdMesh.x.visible = guiState.Sagittal;
+        nrrdMesh.y.visible = guiState.Coronal;
+        nrrdMesh.z.visible = guiState.Axial;
         copperScene.addObject(nrrdMesh.x);
         copperScene.addObject(nrrdMesh.y);
         copperScene.addObject(nrrdMesh.z);
@@ -190,10 +217,6 @@ function loadNrrd(url: string,url_1:string, c_gui: any) {
             nrrdSlices.x.repaint.call(nrrdSlices.x);
             nrrdSlices.y.repaint.call(nrrdSlices.y);
             nrrdSlices.z.repaint.call(nrrdSlices.z);
-            
-            (gui as GUI).add(content.position as any,"x").max(500).min(-500).step(1);
-            (gui as GUI).add(content.position as any,"y").max(500).min(-500).step(1);
-
             
             // bg.onclick = (ev)=>{
             //   const x = ev.offsetX;

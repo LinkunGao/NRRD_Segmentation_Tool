@@ -19,7 +19,8 @@ addEventListener("message", (event) => {
     );
     masks[`label${i}`] = labelMask;
   }
-
+  masks["hasData"] = false;
+  masks["volume"] = 0;
   const len = data.len;
   const width = data.width;
   const height = data.height;
