@@ -57,6 +57,9 @@ export interface ICaseUrls {
   nrrdUrls: Array<string>;
   jsonUrl?: string;
 }
+export interface ICaseRegUrls {
+  nrrdUrls: Array<string>;
+}
 
 export interface ILoadUrls {
   [proName: string]: any;

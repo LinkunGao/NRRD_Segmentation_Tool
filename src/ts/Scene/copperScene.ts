@@ -1,30 +1,21 @@
 import * as THREE from "three";
-import { TrackballControls } from "three/examples/jsm/controls/TrackballControls";
+import { Copper3dTrackballControls } from "../Controls/Copper3dTrackballControls";
 
 import { CameraViewPoint } from "../Controls/copperControls";
 import { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 import { copperGltfLoader } from "../Loader/copperGltfLoader";
-import { pickModelDefault } from "../Utils/raycaster";
-import { copperNrrdLoader, optsType } from "../Loader/copperNrrdLoader";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { copperNrrdTexture3dLoader } from "../Loader/copperNrrdLoader";
 import { copperVtkLoader, copperMultipleVtk } from "../Loader/copperVtkLoader";
-import { createTexture2D_Array, createTexture2D_Zip } from "../Utils/texture2d";
-import { objLoader } from "../Loader/copperOBJLoader";
+import { createTexture2D_Zip } from "../Utils/texture2d";
 import baseScene from "./baseScene";
-import { GUI } from "dat.gui";
-import { copperDicomLoader } from "../Loader/copperDicomLoader";
-import {
-  preRenderCallbackFunctionType,
-  nrrdMeshesType,
-  nrrdSliceType,
-  vtkModels,
-  copperVolumeType,
-  loadingBarType,
-  dicomLoaderOptsType,
-} from "../types/types";
+import { vtkModels } from "../types/types";
+import { TrackballControls } from "three/examples/jsm/controls/TrackballControls";
+import { ICopperSceneOpts } from "../types/types";
 
 export default class copperScene extends baseScene {
   clock: THREE.Clock = new THREE.Clock();
-  controls: TrackballControls;
+  controls: Copper3dTrackballControls | OrbitControls | TrackballControls;
   // isHalfed: boolean = false;
 
   private mixer: THREE.AnimationMixer | null = null;
@@ -34,22 +25,31 @@ export default class copperScene extends baseScene {
   // rayster pick
 
   // texture2d
-  // private depthStep: number = 0.4;
   private texture2dMesh: THREE.Mesh | null = null;
-  // private preRenderCallbackFunctions: Array<preRenderCallbackFunctionType> = [];
-  // private preRenderCallbackFunctions: preRenderCallbackFunctionType;
-  // private sort: boolean = true; //default ascending order
 
   constructor(
     container: HTMLDivElement,
     renderer: THREE.WebGLRenderer,
-    alpha?: boolean
+    opt?: ICopperSceneOpts
   ) {
-    super(container, renderer, alpha);
-    this.controls = new TrackballControls(
-      this.camera,
-      this.renderer.domElement
-    );
+    super(container, renderer, opt);
+
+    if (opt?.controls === "trackball") {
+      this.controls = new TrackballControls(
+        this.camera,
+        this.renderer.domElement
+      );
+    } else if (opt?.controls === "orbit") {
+      this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    } else {
+      this.controls = new Copper3dTrackballControls(
+        this.camera,
+        this.renderer.domElement
+      );
+    }
+
+    this.controls.panSpeed = 3;
+    this.controls.rotateSpeed = 3;
     window.addEventListener("resize", this.onWindowResize, false);
   }
 
@@ -307,7 +307,7 @@ export default class copperScene extends baseScene {
   }
 
   resetView() {
-    (this.controls as TrackballControls).reset();
+    (this.controls as Copper3dTrackballControls).reset();
     this.updateCamera(this.viewPoint);
   }
 
@@ -326,6 +326,34 @@ export default class copperScene extends baseScene {
 
   getCurrentMixer() {
     return this.mixer;
+  }
+
+  updateControls(camera: THREE.PerspectiveCamera | THREE.OrthographicCamera) {
+    this.controls.dispose();
+    this.controls = new Copper3dTrackballControls(
+      camera,
+      this.renderer.domElement
+    );
+    // this.controls.target.set(64, 64, 128);
+    this.controls.target.set(0, 0, 0);
+    this.controls.minZoom = 0.5;
+    this.controls.maxZoom = 4;
+    // this.controls.enablePan = false;
+  }
+
+  onRenderCameraChange(): void {
+    const { width, height } = this.container.getBoundingClientRect();
+    const aspect = width / height;
+    if (this.renderNrrdVolume) {
+      const volumeCamera = this.camera as THREE.OrthographicCamera;
+      const frustumHeight = volumeCamera.top - volumeCamera.bottom;
+
+      volumeCamera.left = (-frustumHeight * aspect) / 2;
+      volumeCamera.right = (frustumHeight * aspect) / 2;
+    } else {
+      (this.camera as THREE.PerspectiveCamera).aspect = aspect;
+    }
+    this.camera.updateProjectionMatrix();
   }
 
   render() {

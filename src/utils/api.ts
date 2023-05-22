@@ -3,6 +3,7 @@ import {
   INrrdCaseNames,
   IExportMask,
   ICaseUrls,
+  ICaseRegUrls,
   IExportMasks,
   IReplaceMask,
 } from "@/models/dataType";
@@ -154,8 +155,35 @@ export async function useClearMaskMesh(name: string) {
   return res;
 }
 
-// export async function useMask(name: string) {
-//   let mask = http.get<Array<IExportMask>>("/mask", { name });
-//   return mask;
-// }
-
+export async function useNrrdRegisterCase(name: string): Promise<ICaseUrls> {
+  return new Promise((resolve, reject) => {
+    let urls:ICaseRegUrls = { nrrdUrls: [] };
+    http.getBlob("/casereg", { name }).then((zipBlob) => {
+      const zip = new JSZip();
+      // Extract the contents of the zip archive
+      zip.loadAsync(zipBlob as any).then((contents) => {
+        const nrrdNames = [];
+        for (let prop in contents.files) {
+          if (prop.includes(".nrrd")) {
+            nrrdNames.push(prop);
+          }
+        }
+        const promises: any = [];
+        nrrdNames.forEach((name) => {
+          const file = contents.files[name];
+          promises.push(file.async("arraybuffer"));
+        });
+        Promise.all(promises)
+          .then((values) => {
+            values.forEach((item, index) => {
+              urls.nrrdUrls.push(URL.createObjectURL(new Blob([item])));
+            });
+            resolve(urls);
+          })
+          .catch((err) => {
+            reject(err);
+          });
+      });
+    });
+  });
+}
