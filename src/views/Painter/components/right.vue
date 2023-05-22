@@ -16,8 +16,8 @@
 <script setup lang="ts">
 import { GUI } from "dat.gui";
 import * as THREE from "three";
-import * as Copper from "copper3d_visualisation";
-import "copper3d_visualisation/dist/css/style.css";
+import * as Copper from "copper3d";
+import "copper3d/dist/css/style.css";
 // import * as Copper from "@/ts/index"
 import { getCurrentInstance, onMounted, ref } from "vue";
 import emitter from "@/utils/bus";
