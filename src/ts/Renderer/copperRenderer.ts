@@ -3,15 +3,15 @@ import copperScene from "../Scene/copperScene";
 import {
   preRenderCallbackFunctionType,
   SceneMapType,
-  optType,
+  ICopperRenderOpt,
 } from "../types/types";
 
 export default class copperRenderer extends baseRenderer {
   private sceneMap: SceneMapType = {};
 
-  // private preRenderCallbackFunctions: Array<preRenderCallbackFunctionType> = [];
+  preRenderCallbackFunctions: Array<Function> = [];
 
-  constructor(container: HTMLDivElement, options?: optType) {
+  constructor(container: HTMLDivElement, options?: ICopperRenderOpt) {
     super(container, options);
   }
 
@@ -34,7 +34,11 @@ export default class copperRenderer extends baseRenderer {
       return undefined;
     } else {
       const alpha = !!this.options?.alpha;
-      const new_scene = new copperScene(this.container, this.renderer, alpha);
+      const new_scene = new copperScene(this.container, this.renderer, {
+        camera: this.options?.cameraType,
+        controls: this.options?.controls,
+        alpha: alpha,
+      });
       new_scene.sceneName = name;
       this.updateEnvironment(new_scene.vignette);
       this.sceneMap[name] = new_scene;
@@ -42,15 +46,9 @@ export default class copperRenderer extends baseRenderer {
     }
   }
 
-  // addPreRenderCallbackFunction(callbackFunction: Function) {
-  //   const id = this.preRenderCallbackFunctions.length + 1;
-  //   const preCallback: preRenderCallbackFunctionType = {
-  //     id,
-  //     callback: callbackFunction,
-  //   };
-  //   this.preRenderCallbackFunctions.push(preCallback);
-  //   return id;
-  // }
+  addPreRenderCallbackFunction(callbackFunction: Function) {
+    this.preRenderCallbackFunctions.push(callbackFunction);
+  }
 
   onWindowResize() {}
   animate = () => {
@@ -60,8 +58,8 @@ export default class copperRenderer extends baseRenderer {
   };
   render() {
     this.currentScene.render();
-    // this.preRenderCallbackFunctions.forEach((item) => {
-    //   item.callback.call(null);
-    // });
+    this.preRenderCallbackFunctions.forEach((item) => {
+      item.call(null);
+    });
   }
 }

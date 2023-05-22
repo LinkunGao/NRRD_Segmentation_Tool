@@ -6,12 +6,14 @@ import { GUI } from "dat.gui";
 interface SceneMapType {
   [key: string]: copperScene | baseScene | copperMScene;
 }
-interface optType {
+interface ICopperRenderOpt {
   guiOpen: boolean;
-  camera?: boolean;
-  performance?: boolean;
-  light?: boolean;
+  cameraGui?: boolean;
+  performanceGui?: boolean;
+  lightGui?: boolean;
   alpha?: boolean;
+  controls?: "copper3d" | "trackball" | "orbit";
+  cameraType?: "perspective" | "orthographic";
   [key: string]: string | boolean | undefined;
 }
 interface stateType {
@@ -82,7 +84,7 @@ interface nrrdDrawImageOptType {
   getMaskData?: (
     mask: ImageData,
     sliceId: number,
-    label:string,
+    label: string,
     width: number,
     height: number,
     clearAllFlag?: boolean
@@ -102,6 +104,12 @@ interface SensorReadResult_kiwrious {
 interface HeartRateResult_kiwrious {
   status: string;
   value?: number;
+}
+
+interface ICopperSceneOpts {
+  controls?: "copper3d" | "orbit" | "trackball";
+  camera?: "perspective" | "orthographic";
+  alpha?: boolean;
 }
 
 declare class SerialService_kiwrious {
@@ -182,10 +190,10 @@ interface exportPaintImageType {
   data: number[];
 }
 
-interface storeExportPaintImageType{
-  label1:exportPaintImageType[];
-  label2:exportPaintImageType[];
-  label3:exportPaintImageType[];
+interface storeExportPaintImageType {
+  label1: exportPaintImageType[];
+  label2: exportPaintImageType[];
+  label3: exportPaintImageType[];
 }
 
 interface optionsGltfExporterType {
@@ -253,7 +261,7 @@ interface IOptVTKLoader {
 
 export type {
   SceneMapType,
-  optType,
+  ICopperRenderOpt,
   stateType,
   modelVisualisationDataType,
   preRenderCallbackFunctionType,
@@ -283,4 +291,5 @@ export type {
   exportPaintImageType,
   storeExportPaintImageType,
   IOptVTKLoader,
+  ICopperSceneOpts,
 };

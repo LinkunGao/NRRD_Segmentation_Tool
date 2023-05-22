@@ -16,6 +16,7 @@ export interface IStoredMasks{
   label1: IExportMask[];
   label2: IExportMask[];
   label3: IExportMask[];
+  hasData:false;
 }
 
 export interface IExportMask {
@@ -42,6 +43,11 @@ export interface IReplaceMask {
   mask: number[];
 }
 
+export interface IMaskMesh {
+  maskMeshObjUrl?: string;
+  meshVolume?:number;
+}
+
 export interface IParams {
   params: unknown;
   responseType?: string;
@@ -50,6 +56,9 @@ export interface IParams {
 export interface ICaseUrls {
   nrrdUrls: Array<string>;
   jsonUrl?: string;
+}
+export interface ICaseRegUrls {
+  nrrdUrls: Array<string>;
 }
 
 export interface ILoadUrls {

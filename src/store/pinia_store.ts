@@ -9,15 +9,19 @@ import {
   useMask,
   useMaskNrrd,
   useMaskObjMesh,
-  useClearMaskMesh
+  useClearMaskMesh,
+  useNrrdRegisterCase
 } from "@/utils/api";
 import {
   INrrdCaseNames,
   IExportMask,
   ICaseUrls,
+  ICaseRegUrls,
   IExportMasks,
   IReplaceMask,
+  IMaskMesh
 } from "@/models/dataType";
+import { type } from "os";
 
 export const useFileCountStore = defineStore("filesCount", () => {
   const cases = ref<INrrdCaseNames>();
@@ -39,6 +43,18 @@ export const useNrrdCaseUrlsStore = defineStore("getCaseFiles", () => {
   return {
     caseUrls,
     getCaseFileUrls,
+  };
+});
+
+export const useRegNrrdUrlsStore = defineStore("getRegNrrdFiles", () => {
+  const regUrls = ref<ICaseRegUrls>();
+  const getRegNrrdUrls = async (name: string) => {
+    regUrls.value = await useNrrdRegisterCase(name);
+  };
+
+  return {
+    regUrls,
+    getRegNrrdUrls,
   };
 });
 
@@ -100,9 +116,10 @@ export const useMaskNrrdStore = defineStore("getMaskNrrd",()=>{
 })
 
 export const useMaskMeshObjStore = defineStore("getMaskMesh",()=>{
-  const maskMeshObj = ref<string>();
+  
+  const maskMeshObj = ref<IMaskMesh>({});
   const getMaskMeshObj =async (name:string) => {
-    maskMeshObj.value = (await useMaskObjMesh(name)) as string
+    maskMeshObj.value = (await useMaskObjMesh(name)) as IMaskMesh
   };
   return {
     maskMeshObj,

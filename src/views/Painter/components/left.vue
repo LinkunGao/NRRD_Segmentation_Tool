@@ -30,9 +30,9 @@
 </template>
 <script setup lang="ts">
 import { GUI } from "dat.gui";
-import * as Copper from "copper3d_visualisation";
-import "copper3d_visualisation/dist/css/style.css";
-// import * as Copper from "@/ts/index"
+// import * as Copper from "copper3d";
+import "copper3d/dist/css/style.css";
+import * as Copper from "@/ts/index"
 import Intro from "./intro.vue";
 import Bottom from "./bottom.vue";
 import Logo from "@/components/logo.vue";
@@ -48,9 +48,10 @@ import {
   useReplaceMarksStore,
   useSaveMasksStore,
   useMaskStore,
-  useClearMaskMeshStore
+  useClearMaskMeshStore,
+  useRegNrrdUrlsStore
 } from "@/store/pinia_store";
-import { findCurrentCase, revokeAppUrls, getEraserUrlsForOffLine } from "../tools";
+import { findCurrentCase, revokeAppUrls, revokeRegisterNrrdImages, getEraserUrlsForOffLine } from "../tools";
 import emitter from "@/utils/bus";
 
 
@@ -71,6 +72,7 @@ let scene: Copper.copperScene | undefined;
 let pre_slices = ref();
 
 let gui = new GUI({ width: 300, autoPlace: false });
+let optsGui:GUI|undefined=undefined;
 let nrrdTools: Copper.nrrd_tools;
 let loadBarMain: Copper.loadingBarType;
 let loadingContainer: HTMLDivElement, progress: HTMLDivElement;
@@ -82,9 +84,21 @@ let filesCount = ref(0);
 let selectedContrastFolder: GUI;
 let firstLoad = true;
 let loadCases = true;
+let loadReg = false;
 
 let currentCaseId = "";
 let showIntro = ref(false)
+
+let state = {
+    introduction: showIntro.value,
+    showContrast: false,
+    switchCase: "",
+    showRegisterImages:false,
+    release: () => {
+      revokeAppUrls(loadedUrls);
+      loadedUrls = {};
+    },
+  };
 
 type selecedType = {
   [key: string]: boolean;
@@ -94,6 +108,8 @@ const { cases } = storeToRefs(useFileCountStore());
 const { getFilesNames } = useFileCountStore();
 const { caseUrls } = storeToRefs(useNrrdCaseUrlsStore());
 const { getCaseFileUrls } = useNrrdCaseUrlsStore();
+const { regUrls } = storeToRefs(useRegNrrdUrlsStore());
+const { getRegNrrdUrls } = useRegNrrdUrlsStore();
 const { sendInitMask } = useInitMarksStore();
 const { sendReplaceMask } = useReplaceMarksStore();
 const { sendSaveMask } = useSaveMasksStore();
@@ -116,7 +132,8 @@ onMounted(async () => {
 
   nrrdTools = new Copper.nrrd_tools(nrrd_c.value as HTMLDivElement);
   // for offline working
-  nrrdTools.setEraserUrls(urls);
+  
+  nrrdTools.setEraserUrls(eraserUrls);
 
   loadBarMain = Copper.loading();
 
@@ -291,19 +308,22 @@ const getMaskData = async (
 };
 
 watchEffect(() => {
+  
   if (
     filesCount.value != 0 &&
     allSlices.length != 0 &&
     filesCount.value === urls.length
   ) {
     console.log("All files ready!");
-    // if (!!timer) {
-    //   clearInterval(timer);
-    // }
-    nrrdTools.clear();
     allSlices.sort((a: any, b: any) => {
       return a.order - b.order;
     });
+    
+    if(loadReg){
+      nrrdTools.switchAllSlicesArrayData(allSlices);
+      loadReg = false;
+    }else{
+    nrrdTools.clear();
     nrrdTools.setShowInMainArea(true);
     nrrdTools.setAllSlices(allSlices);
     
@@ -321,14 +341,7 @@ watchEffect(() => {
       });
       nrrdTools.draw(scene as Copper.copperScene, gui, { getMaskData });
       scene?.addPreRenderCallbackFunction(nrrdTools.start);
-      const state = {
-        release: () => {
-          revokeAppUrls(loadedUrls);
-          loadedUrls = {};
-        },
-      };
-      let opts = gui.addFolder("opts");
-      opts.add(state, "release");
+      setUpGuiAfterLoading()
     } else {
       nrrdTools.redrawMianPreOnDisplayCanvas();
     }
@@ -338,12 +351,6 @@ watchEffect(() => {
     }
 
     max.value = nrrdTools.getMaxSliceNum()[1];
-    setTimeout(() => {
-      initSliceIndex.value = 0;
-      filesCount.value = 0;
-    }, 1000);
-    firstLoad = false;
-    loadCases = false;
 
     const selectedState: selecedType = {};
 
@@ -380,6 +387,14 @@ watchEffect(() => {
       });
     }
   }
+  setTimeout(() => {
+      initSliceIndex.value = 0;
+      filesCount.value = 0;
+    }, 1000);
+    firstLoad = false;
+    loadCases = false;
+}
+   
 });
 
 async function loadModel(name: string) {
@@ -458,14 +473,7 @@ const loadAllNrrds = (urls: Array<string>) => {
 };
 
 function setupGui() {
-  const state = {
-    introduction: showIntro.value,
-    showContrast: false,
-    switchCase: cases.value?.names[0],
-    release: () => {
-      revokeAppUrls(loadedUrls);
-    },
-  };
+  state.switchCase = cases.value?.names[0] as string
   gui
     .add(state, "introduction")
     .name("Intro Panel")
@@ -480,6 +488,12 @@ function setupGui() {
     .add(state, "switchCase", cases.value?.names as string[])
     .onChange(async (value) => {
       switchAnimationStatus("flex", "Saving masks data, please wait......");
+      // revoke the regsiter images
+      if(!!regUrls.value&&regUrls.value.nrrdUrls.length>0){
+        revokeRegisterNrrdImages(regUrls.value.nrrdUrls)
+        regUrls.value.nrrdUrls.length = 0
+      }
+
       currentCaseId = value;
       await getInitData();
       const details = cases.value?.details
@@ -493,6 +507,9 @@ function setupGui() {
         await getMaskDataBackend(value);
         loadedUrls[value].jsonUrl = maskBackend.value;
         urls = loadedUrls[value].nrrdUrls;
+        if(!!caseUrls.value){
+          caseUrls.value.nrrdUrls = urls
+        }
       } else {
         switchAnimationStatus("flex", "Prepare Nrrd files, please wait......");
         await getCaseFileUrls(value);
@@ -503,12 +520,48 @@ function setupGui() {
       }
       readyToLoad(urls);
       loadCases = true;
+      setUpGuiAfterLoading()
     });
 
   selectedContrastFolder = gui.addFolder("select display contrast");
-  // let opts = gui.addFolder("opts");
-  // opts.add(state, "release");
+  
 }
+
+function setUpGuiAfterLoading(){
+  
+  if(!!optsGui){
+    
+    gui.removeFolder(optsGui)
+    optsGui = undefined;
+    state.showRegisterImages = false;
+  }
+  optsGui = gui.addFolder("opts");
+  optsGui.add(state,"showRegisterImages").onChange(async ()=>{
+      if(state.showRegisterImages){
+        switchAnimationStatus(
+          "flex",
+          "Prepare and Loading masks data, please wait......"
+        );
+
+        if(!(!!regUrls.value?.nrrdUrls&&regUrls.value?.nrrdUrls.length>0)) await getRegNrrdUrls(currentCaseId);
+        if(!!regUrls.value?.nrrdUrls&&regUrls.value?.nrrdUrls.length>0){
+          urls = regUrls.value.nrrdUrls;
+          readyToLoad(urls);
+          loadReg = true;
+        }
+        
+      }else{
+        if (caseUrls.value) {
+          urls = caseUrls.value.nrrdUrls;
+          readyToLoad(urls);
+          loadReg = true;
+        }
+      }
+  })
+  optsGui.add(state, "release");
+  optsGui.closed = false;
+}
+
 </script>
 
 <style>

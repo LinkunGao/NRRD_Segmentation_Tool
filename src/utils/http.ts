@@ -39,7 +39,15 @@ const http: IHttp = {
       axios
         .get(url, { params, responseType: "blob" })
         .then((res) => {
-          resolve(res.data);
+          
+          const x_header_str = res.headers["x-volume"]
+          if (!!x_header_str){
+            const x_header_obj = JSON.parse(x_header_str) 
+            resolve(Object.assign({data:res.data, x_header_obj}));
+          }else{
+            resolve(res.data);
+          }
+          
         })
         .catch((err) => {
           reject(err);

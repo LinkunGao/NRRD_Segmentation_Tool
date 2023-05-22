@@ -35,6 +35,12 @@ export function revokeAppUrls(revokeUrls: ILoadUrls) {
   }
 }
 
+export function revokeRegisterNrrdImages(regUrls:string[]){
+  regUrls.forEach(url=>{
+    URL.revokeObjectURL(url);
+  })
+}
+
 export function getEraserUrlsForOffLine(){
   const urls = [eraser_1,eraser_2,eraser_3,eraser_4,eraser_5,eraser_6,eraser_7,eraser_8,eraser_9,eraser_10, eraser_11]
   return urls;
