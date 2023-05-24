@@ -327,7 +327,7 @@ watchEffect(() => {
       nrrdTools.switchAllSlicesArrayData(allSlices);
       loadReg = false;
       switchAnimationStatus("none");
-      setTimeout(()=>switchRegCheckBoxStatus(regCkeckbox.domElement, "auto", "1"), 500);
+      setTimeout(()=>switchRegCheckBoxStatus(regCkeckbox.domElement, "auto", "1"), 1000);
       if(regAllSlices.length===0) regAllSlices = [...allSlices];
 
     }else{
