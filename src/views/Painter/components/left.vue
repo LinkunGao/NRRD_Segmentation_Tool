@@ -29,10 +29,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import { GUI } from "dat.gui";
-// import * as Copper from "copper3d";
+import { GUI, GUIController } from "dat.gui";
+import * as Copper from "copper3d";
 import "copper3d/dist/css/style.css";
-import * as Copper from "@/ts/index"
+// import * as Copper from "@/ts/index"
 import Intro from "./intro.vue";
 import Bottom from "./bottom.vue";
 import Logo from "@/components/logo.vue";
@@ -77,6 +77,9 @@ let nrrdTools: Copper.nrrd_tools;
 let loadBarMain: Copper.loadingBarType;
 let loadingContainer: HTMLDivElement, progress: HTMLDivElement;
 let allSlices: Array<any> = [];
+let originAllSlices: Array<any> = [];
+let regAllSlices: Array<any> = [];
+let regCkeckbox: GUIController
 let urls: Array<string> = [];
 let loadedUrls: ILoadUrls = {};
 
@@ -320,13 +323,20 @@ watchEffect(() => {
     });
     
     if(loadReg){
+
       nrrdTools.switchAllSlicesArrayData(allSlices);
       loadReg = false;
+      switchAnimationStatus("none");
+      setTimeout(()=>switchRegCheckBoxStatus(regCkeckbox.domElement, "auto", "1"), 500);
+      if(regAllSlices.length===0) regAllSlices = [...allSlices];
+
     }else{
     nrrdTools.clear();
     nrrdTools.setShowInMainArea(true);
     nrrdTools.setAllSlices(allSlices);
     
+    originAllSlices = [...allSlices]
+
     initSliceIndex.value = nrrdTools.getCurrentSliceIndex();
 
     const getSliceNum = (index: number, contrastindex: number) => {
@@ -491,8 +501,10 @@ function setupGui() {
       // revoke the regsiter images
       if(!!regUrls.value&&regUrls.value.nrrdUrls.length>0){
         revokeRegisterNrrdImages(regUrls.value.nrrdUrls)
-        regUrls.value.nrrdUrls.length = 0
+        regUrls.value.nrrdUrls.length = 0;
       }
+      regAllSlices.length = 0;
+      originAllSlices.length = 0;
 
       currentCaseId = value;
       await getInitData();
@@ -536,30 +548,57 @@ function setUpGuiAfterLoading(){
     state.showRegisterImages = false;
   }
   optsGui = gui.addFolder("opts");
-  optsGui.add(state,"showRegisterImages").onChange(async ()=>{
-      if(state.showRegisterImages){
-        switchAnimationStatus(
+  regCkeckbox = optsGui.add(state,"showRegisterImages").onChange(async ()=>{
+
+    if((regCkeckbox.domElement.childNodes[0] as HTMLInputElement).disabled ){
+      state.showRegisterImages = !state.showRegisterImages;
+      return;
+    }
+
+    switchRegCheckBoxStatus(regCkeckbox.domElement, "none", "0.5");
+    loadReg = true;
+    switchAnimationStatus(
           "flex",
-          "Prepare and Loading masks data, please wait......"
+          "Prepare and Loading data, please wait......"
         );
+      if(state.showRegisterImages){
+        
+        if(regAllSlices.length>0){
+          allSlices = [...regAllSlices];
+          filesCount.value = 5;
+          return;
+        }
 
         if(!(!!regUrls.value?.nrrdUrls&&regUrls.value?.nrrdUrls.length>0)) await getRegNrrdUrls(currentCaseId);
         if(!!regUrls.value?.nrrdUrls&&regUrls.value?.nrrdUrls.length>0){
           urls = regUrls.value.nrrdUrls;
           readyToLoad(urls);
-          loadReg = true;
         }
         
-      }else{
+      }else{        
+        if(originAllSlices.length>0){
+          allSlices = [...originAllSlices];
+          filesCount.value = 5;
+          return;
+        }
         if (caseUrls.value) {
           urls = caseUrls.value.nrrdUrls;
           readyToLoad(urls);
-          loadReg = true;
         }
       }
   })
   optsGui.add(state, "release");
   optsGui.closed = false;
+}
+
+function switchRegCheckBoxStatus(checkbox:HTMLElement, pointerEvents:"none"|"auto", opacity:"0.5"|"1" ){
+
+  const inputBox = checkbox.childNodes[0] as HTMLInputElement
+  inputBox.disabled = !inputBox.disabled;
+  inputBox.readOnly = !inputBox.readOnly;
+  checkbox.style.pointerEvents = pointerEvents;
+  checkbox.style.opacity = opacity;
+
 }
 
 </script>
