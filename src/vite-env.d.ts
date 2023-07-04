@@ -16,3 +16,4 @@ declare module 'fflate.module.min';
 declare module 'copper3d_plugin_nrrd';
 declare module 'copper3d_plugin_heart_k';
 declare module 'copper3d_plugin_heartjs_config';
+declare module 'static-kdtree'

@@ -6,6 +6,7 @@ import {
   ICaseRegUrls,
   IExportMasks,
   IReplaceMask,
+  IRegRquest
 } from "@/models/dataType";
 import JSZip from "jszip";
 
@@ -155,10 +156,10 @@ export async function useClearMaskMesh(name: string) {
   return res;
 }
 
-export async function useNrrdRegisterCase(name: string): Promise<ICaseUrls> {
+export async function useNrrdRegisterCase(requestInfo: IRegRquest): Promise<ICaseUrls> {
   return new Promise((resolve, reject) => {
     let urls:ICaseRegUrls = { nrrdUrls: [] };
-    http.getBlob("/casereg", { name }).then((zipBlob) => {
+    http.getBlob("/casereg", {data: JSON.stringify(requestInfo)}).then((zipBlob) => {
       const zip = new JSZip();
       // Extract the contents of the zip archive
       zip.loadAsync(zipBlob as any).then((contents) => {
