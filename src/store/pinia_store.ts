@@ -19,7 +19,8 @@ import {
   ICaseRegUrls,
   IExportMasks,
   IReplaceMask,
-  IMaskMesh
+  IMaskMesh,
+  IRegRquest,
 } from "@/models/dataType";
 import { type } from "os";
 
@@ -48,8 +49,8 @@ export const useNrrdCaseUrlsStore = defineStore("getCaseFiles", () => {
 
 export const useRegNrrdUrlsStore = defineStore("getRegNrrdFiles", () => {
   const regUrls = ref<ICaseRegUrls>();
-  const getRegNrrdUrls = async (name: string) => {
-    regUrls.value = await useNrrdRegisterCase(name);
+  const getRegNrrdUrls = async (requestInfo:IRegRquest) => {
+    regUrls.value = await useNrrdRegisterCase(requestInfo);
   };
 
   return {

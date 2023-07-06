@@ -69,3 +69,9 @@ export interface ICaseDetails{
   currentCaseId:string;
   details:Array<IDetails>
 }
+
+export interface IRegRquest{
+  name:string,
+  radius?: number,
+  origin?: number[]
+}

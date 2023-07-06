@@ -26,6 +26,8 @@ import { nrrd_tools } from "./Utils/nrrd_tool";
 
 import { Copper3dTrackballControls } from "./Controls/Copper3dTrackballControls";
 
+import { MeshNodeTool } from "./Utils/MeshNodeTool";
+
 import {
   nrrdMeshesType,
   nrrdSliceType,
@@ -40,10 +42,11 @@ import {
 
 import "./css/style.css";
 
-export const REVISION = "v1.15.9";
+export const REVISION = "v1.15.17";
+
 
 console.log(
-  "%cCopper3D Visualisation %cBeta:v1.15.9",
+  "%cCopper3D Visualisation %cBeta:v1.15.17",
   "padding: 3px;color:white; background:#023047",
   "padding: 3px;color:white; background:#f50a25"
 );
@@ -68,6 +71,7 @@ export {
   loading,
   Copper3dTrackballControls,
   createTexture2D_NRRD,
+  MeshNodeTool,
 };
 
 export type {

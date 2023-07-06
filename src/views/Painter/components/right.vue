@@ -1,25 +1,29 @@
 <template>
-  <div id="bg_2" ref="base_container_2">
+  <div id="bg_2" ref="bg">
     <div v-show="openLoading" ref="loading_c" class="loading"></div>
     <div class="value-panel">
-      <div><span>Tumuor volume:</span> <span>{{ volume }}</span></div>
+      <div><span>Tumuor volume:</span> <span>{{ volume }} mm<sup>3</sup></span></div>
       <div><span>Tumuor extent:</span> <span>71</span></div>
       <div class="skin"><span>Skin:</span> <span>27 mm</span></div>
       <div class="ribcage"><span>Ribcage:</span> <span>36 mm</span></div>
-      <div class="nipple"><span>Nipple:</span> <span>L: 53 mm</span></div>
+      <div class="nipple"><span>Nipple:</span> <span>{{ nippleDist }} mm</span></div>
+      <div class="nipple"><span></span> <span>{{ nippleClock }}</span></div>
     </div>
     <div ref="c_gui" id="gui"></div>
     <!-- <button class="btn" @click="getMaskNrrdHandle">load mask</button> -->
+    <Drawer @on-view-single-click="handleViewSigleClick" @on-view-double-click="handleViewsDoubleClick"/>
   </div>
 </template>
 
 <script setup lang="ts">
 import { GUI } from "dat.gui";
 import * as THREE from "three";
-import * as Copper from "copper3d";
+// import * as Copper from "copper3d";
+import createKDTree from "copper3d-tree";
 import "copper3d/dist/css/style.css";
-// import * as Copper from "@/ts/index"
+import * as Copper from "@/ts/index"
 import { getCurrentInstance, onMounted, ref } from "vue";
+import Drawer from "@/components/drawer.vue";
 import emitter from "@/utils/bus";
 import { storeToRefs } from "pinia";
 import {
@@ -29,27 +33,40 @@ import {
 import {
   ICaseDetails
 } from "@/models/dataType"
-import {findCurrentCase} from "../tools"
+import {findCurrentCase, transformMeshPointToImageSpace,getClosestNipple} from "../tools"
+
 let refs = null;
-let bg: HTMLDivElement = ref<any>(null);
+let bg= ref<HTMLDivElement>();
 let appRenderer: Copper.copperRenderer;
 let c_gui: HTMLDivElement = ref<any>(null);
 let loading_c = ref<HTMLDivElement>();
 let loadBar1: Copper.loadingBarType;
 let casename: string
 let oldMeshes: Array<THREE.Object3D> = []
-let copperScene: Copper.copperScene
+let nrrdMeshes:Copper.nrrdMeshesType;
+let copperScene: Copper.copperScene;
 let socket = new WebSocket("ws://127.0.0.1:8000/ws");
 let loadBarMain: Copper.loadingBarType;
 let loadingContainer: HTMLDivElement;
 let timer:NodeJS.Timer
 let openLoading = ref(false);
-let volume = ref(0)
+let volume = ref(0);
+let nippleDist = ref("L: 0");
+let nippleClock = ref("@ 0:0");
+let tumourCenter;
+let nippleCentralLimit = 10;
+let nippleTl:number[] = [];
+let nippleTr:number[] = [];
 let guiState = {
   Sagittal: true,
   Axial: true,
   Coronal: true
 }
+
+// for deal with single/double click on a div
+let clickCount = 0;
+let clickTimer:any = null;
+let validFlag = false;
 
 const { maskNrrd } = storeToRefs(useMaskNrrdStore());
 const { getMaskNrrd } = useMaskNrrdStore();
@@ -59,9 +76,9 @@ const { getMaskMeshObj } = useMaskMeshObjStore();
 onMounted(() => {
   let { $refs } = (getCurrentInstance() as any).proxy;
   refs = $refs;
-  bg = refs.base_container_2;
+  // bg = refs.base_container_2;
   c_gui = refs.c_gui;
-
+  
   loadBarMain = Copper.loading();
 
   loadingContainer = loadBarMain.loadingContainer;
@@ -85,7 +102,7 @@ onMounted(() => {
     }else{
       const blob = new Blob([event.data], {type:"model/obj"})
       const url = URL.createObjectURL(blob)
-      maskMeshObj.value.maskMeshObjUrl = url
+      maskMeshObj.value.maskMeshObjUrl = url;
       loadNrrd(maskNrrd.value as string, maskMeshObj.value.maskMeshObjUrl as string, c_gui);
       loadingContainer.style.display = "none";
     }
@@ -93,7 +110,7 @@ onMounted(() => {
     
   }
 
-  appRenderer = new Copper.copperRenderer(bg);
+  appRenderer = new Copper.copperRenderer(bg.value as HTMLDivElement);
 
   loadBar1 = Copper.loading();
 
@@ -124,6 +141,7 @@ onMounted(() => {
     }else{
       loadNrrd(maskNrrd.value as string,"", c_gui);
     } 
+
   })
   appRenderer.animate();
 });
@@ -147,6 +165,17 @@ function initScene(name:string){
   if (copperScene == undefined) {
     copperScene = appRenderer.createScene(name) as Copper.copperScene;
     appRenderer.setCurrentScene(copperScene);
+
+    // config controls
+    const controls = copperScene.controls as Copper.Copper3dTrackballControls
+    // controls.noPan = true;
+    controls.mouseButtons = {
+      LEFT:THREE.MOUSE.ROTATE,
+      MIDDLE: THREE.MOUSE.ROTATE,
+      RIGHT: THREE.MOUSE.PAN
+    }
+    controls.rotateSpeed = 3.0;
+
     copperScene.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view.json");
       emitter.on("resize", () => {
         copperScene?.onWindowResize();
@@ -158,11 +187,13 @@ function initScene(name:string){
 }
 
 
+
+
 function loadNrrd(url: string,url_1:string, c_gui: any) {
   removeOldMeshes()
     const opts: Copper.optsType = {
-      openGui: true,
-      container: c_gui,
+      openGui: false,
+      // container: c_gui,
     };
     if (!!copperScene) {
       const nrrdCallback = (
@@ -174,70 +205,238 @@ function loadNrrd(url: string,url_1:string, c_gui: any) {
 
         const origin = volume.header.space_origin.map((num:any)=>Number(num));
         const spacing = volume.spacing;
-        const ras = volume.RASDimensions;
-        
+        const ras = volume.RASDimensions; // mm
+        const dimensions = volume.dimensions; // pixels
         
         const x_bias = - ( origin[0] * 2 + ras[0] ) / 2;
         const y_bias = - ( origin[1] * 2 + ras[1] ) / 2;
         const z_bias = - ( origin[2] * 2 + ras[2] ) / 2;
-        (gui as GUI).closed = true;
-        gui?.add(guiState, "Axial").onChange((flag)=>{
-          nrrdMesh.z.visible = flag
-        })
-        gui?.add(guiState, "Sagittal").onChange((flag)=>{
-          nrrdMesh.x.visible = flag
-        })
-        gui?.add(guiState, "Coronal").onChange((flag)=>{
-          nrrdMesh.y.visible = flag
-        })
+
+        // createOriginSphere(origin,ras,spacing,x_bias,y_bias,z_bias);
+        nrrdMeshes = nrrdMesh;
+        const bias = new THREE.Vector3(x_bias,y_bias,z_bias);
+
         nrrdMesh.x.visible = guiState.Sagittal;
         nrrdMesh.y.visible = guiState.Coronal;
         nrrdMesh.z.visible = guiState.Axial;
+        nrrdMesh.x.name = "Sagittal";
+        nrrdMesh.y.name = "Cornal";
+        nrrdMesh.z.name = "Axial";
         copperScene.addObject(nrrdMesh.x);
         copperScene.addObject(nrrdMesh.y);
         copperScene.addObject(nrrdMesh.z);
         oldMeshes.push(nrrdMesh.x,nrrdMesh.y,nrrdMesh.z)
-        copperScene.controls.rotateSpeed = 1.5;
+        copperScene.controls.rotateSpeed = 3.5;
+        copperScene.controls.panSpeed = 0.5;
     
         if(url_1){
           copperScene.loadOBJ(url_1, (content)=>{
             oldMeshes.push(content)
-            content.position.set(x_bias, y_bias, z_bias);
             
-           
-            content.position.set(x_bias, y_bias, z_bias);
+            content.position.set(bias.x,bias.y, bias.z);
+            ((content.children[0] as THREE.Mesh).material as THREE.MeshStandardMaterial).color = new THREE.Color("green");
+            
             const box = new THREE.Box3().setFromObject(content);
             const size = box.getSize(new THREE.Vector3()).length();
-            const center = box.getCenter(new THREE.Vector3());
+            tumourCenter = box.getCenter(new THREE.Vector3());
             
             // reset nrrd slice
-            nrrdSlices.x.index = nrrdSlices.x.RSAMaxIndex/2 + center.x
-            nrrdSlices.y.index = nrrdSlices.y.RSAMaxIndex/2 + center.y
-            nrrdSlices.z.index = nrrdSlices.z.RSAMaxIndex/2 + center.z
+            nrrdSlices.x.index = nrrdSlices.x.RSAMaxIndex/2 + tumourCenter.x
+            nrrdSlices.y.index = nrrdSlices.y.RSAMaxIndex/2 + tumourCenter.y
+            nrrdSlices.z.index = nrrdSlices.z.RSAMaxIndex/2 + tumourCenter.z
             nrrdSlices.x.repaint.call(nrrdSlices.x);
             nrrdSlices.y.repaint.call(nrrdSlices.y);
             nrrdSlices.z.repaint.call(nrrdSlices.z);
-            
-            // bg.onclick = (ev)=>{
-            //   const x = ev.offsetX;
-            //   const y = ev.offsetY;
-            //   const p = copperScene.pickSpecifiedModel([nrrdMesh.x,nrrdMesh.y,nrrdMesh.z],{x,y})
-            //   console.log(p);
-              
-            // }
-
+           
+            loadBreastModel(gui as GUI, origin, spacing,dimensions,bias,tumourCenter,nrrdMesh)
           })
+        }else{
+          loadBreastModel(gui as GUI, origin, spacing,dimensions,bias)
         }
+        
+        
       };
 
-      (copperScene as Copper.copperScene).loadNrrd(url, loadBar1,true, nrrdCallback, opts);
+      (copperScene as Copper.copperScene).loadNrrd(url, loadBar1, true, nrrdCallback, opts);
     }
+}
+
+
+
+function loadBreastModel(guiControl:GUI, origin:number[], spacing:number[],dimensions:number[],bias:THREE.Vector3, tumourCenter?:THREE.Vector3,nrrdMesh?: Copper.nrrdMeshesType){
+  const geometryR = new THREE.SphereGeometry(5, 32, 16);
+  const geometryL = new THREE.SphereGeometry(5, 32, 16);
+  const material = new THREE.MeshBasicMaterial({color:"hotpink"});
+  const sphereL = new THREE.Mesh(geometryL, material);
+  const sphereR = new THREE.Mesh(geometryR, material);
+  
+
+    // 12
+//  todo load nipple data
+  const l =[
+              76.14583587646484,
+              80.57292175292969,
+              68.90000152587
+    ]
+  const r =  [
+            93.85417175292969,
+            257.65625,
+            57.20000457763672
+        ];
+  const nipplesPos = [l,r];   
+
+
+  
+  nippleTl = transformMeshPointToImageSpace(nipplesPos[0], origin, spacing, dimensions, bias);
+  nippleTr = transformMeshPointToImageSpace(nipplesPos[1], origin, spacing, dimensions, bias);
+
+  
+  if(!!tumourCenter){
+    // const nippleTree = createKDTree(nipplesPos);
+    // const idx = nippleTree.nn([tumourCenter.x,tumourCenter.y,tumourCenter.z])
+    // console.log(idx);
+    const nippleLeft = new THREE.Vector3(nippleTl[0],nippleTl[1],nippleTl[2]);
+    const nippleRight = new THREE.Vector3(nippleTr[0],nippleTr[1],nippleTr[2]);
+    const clockInfo =  getClosestNipple(nippleLeft,nippleRight,tumourCenter);
+    
+    nippleDist.value = clockInfo.dist;
+    console.log( clockInfo.radial_distance, nippleCentralLimit);
+    
+    if(clockInfo.radial_distance < nippleCentralLimit){
+      nippleClock.value = "central";
+    }else{
+      nippleClock.value = "@ "+ clockInfo.timeStr
+    }
+  }
+
+  
+  // valide(tl,tr,nrrdMesh)
+  sphereL.position.set( nippleTl[0], nippleTl[1], nippleTl[2]);
+  sphereR.position.set( nippleTr[0], nippleTr[1], nippleTr[2]);
+
+  copperScene.addObject(sphereR)
+  copperScene.addObject(sphereL)
+
+  oldMeshes.push(sphereL)
+  oldMeshes.push(sphereR)
 }
 
 function removeOldMeshes(){
   if(!!copperScene){
-    (copperScene as Copper.copperScene).scene.remove(...oldMeshes)
+    (copperScene as Copper.copperScene).scene.remove(...oldMeshes);
+    oldMeshes.length = 0;
+   }
+}
+
+function valide(start:boolean, tl?:any,tr?:any,nrrdMesh?:any){
+  let oldPoint:any;
+    const geometry = new THREE.SphereGeometry(5, 32, 16);
+    const material = new THREE.MeshBasicMaterial({color:"green"});
+    const validCore = (ev:MouseEvent)=>{
+      if(!!oldPoint){
+        copperScene.scene.remove(oldPoint)
+      }
+      const x = ev.offsetX;
+      const y = ev.offsetY;
+      const p = copperScene.pickSpecifiedModel([nrrdMesh.x,nrrdMesh.y,nrrdMesh.z],{x,y})
+      oldPoint = new THREE.Mesh(geometry, material);
+      oldPoint.name = "valid point";
+      copperScene.scene.add(oldPoint);
+      const target = p.intersects.filter((obj=>obj.object.name === "Cornal"))[0] as any
+      if(!!target){
+        oldPoint.position.set(target.point.x,target.point.y,target.point.z)
+        const a =  getClosestNipple(new THREE.Vector3(tl[0],tl[1],tl[2]),new THREE.Vector3(tr[0],tr[1],tr[2]),oldPoint.position);
+        console.log(a);
+      }
+    }
+  if(start){
+    (bg.value as HTMLDivElement).onclick = validCore;
+  }else{
+    (bg.value as HTMLDivElement).onclick = null;
+    if(!!oldPoint){
+        copperScene.scene.remove(oldPoint)
+      }
+    copperScene.scene.traverse((mesh)=>{
+      if(mesh.name === "valid point"){
+        copperScene.scene.remove(mesh);
+      }
+    })
   }
+}
+
+const resetNrrdImage = ()=>{
+  copperScene.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view.json");
+  nrrdMeshes.x.visible = true;
+  nrrdMeshes.y.visible = true;
+  nrrdMeshes.z.visible = true;
+  valide(false);
+  copperScene.controls.reset();
+  copperScene.controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
+}
+
+const handleViewSigleClick = (view:string)=>{
+  copperScene.controls.mouseButtons.LEFT = -1;
+  clickCount ++;
+  if(clickCount===1){
+    clickTimer = setTimeout(()=>{
+      switch (view) {
+        case "sagittal":
+          nrrdMeshes.x.visible = true;
+          nrrdMeshes.y.visible = false;
+          nrrdMeshes.z.visible = false;
+          break;
+        case "axial":
+          nrrdMeshes.x.visible = false;
+          nrrdMeshes.y.visible = false;
+          nrrdMeshes.z.visible = true;
+          break;
+        case "coronal":
+          nrrdMeshes.x.visible = false;
+          nrrdMeshes.y.visible = true;
+          nrrdMeshes.z.visible = false;
+          break;
+        case "clock":
+          validFlag = !validFlag;
+          valide(validFlag,nippleTl,nippleTr,nrrdMeshes)
+          break;
+        case "reset":
+          resetNrrdImage();
+          break;
+      }
+      clickCount=0  
+    },200)
+  }
+  
+}
+
+const handleViewsDoubleClick = (view:string)=>{
+  !!clickTimer && clearTimeout(clickTimer);
+  clickCount = 0;
+  copperScene.controls.mouseButtons.LEFT = -1;
+  copperScene.controls.reset();
+  switch (view) {
+    case "sagittal":
+      nrrdMeshes.x.visible = true;
+      nrrdMeshes.y.visible = false;
+      nrrdMeshes.z.visible = false;
+      copperScene.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view_sagittal.json");
+      break;
+    
+    case "axial":
+      nrrdMeshes.x.visible = false;
+      nrrdMeshes.y.visible = false;
+      nrrdMeshes.z.visible = true;
+      copperScene.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view.json");
+      break;
+  
+    case "coronal":
+      nrrdMeshes.x.visible = false;
+      nrrdMeshes.y.visible = true;
+      nrrdMeshes.z.visible = false;
+      copperScene.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view_coronal.json");
+      break;
+  }
+  
 }
 </script>
 
@@ -246,6 +445,9 @@ function removeOldMeshes(){
   width: 100%;
   height: 100%;
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   /* overflow: hidden;
   position: relative; */
 }
@@ -266,12 +468,15 @@ function removeOldMeshes(){
 }
 .value-panel {
   position: absolute;
+  left: 0px;
+  top: 0px;
   width: 200px;
-  height: 130px;
+  height: 150px;
   background-color: rgba(0, 0, 0, 0.7);
   border: 1px solid black;
   border-radius: 10px;
   padding: 10px 15px;
+  font-size: smaller;
   /* display: flex; */
   /* align-items: center; */
   /* justify-content: center; */

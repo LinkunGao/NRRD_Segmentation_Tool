@@ -56,7 +56,7 @@ onMounted(() => {
 <style scoped>
 .split-container {
   display: grid;
-  grid-template-columns: 70% 30%;
+  grid-template-columns: 65% 35%;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
@@ -80,7 +80,7 @@ onMounted(() => {
 .split-bar {
   position: absolute;
   top: 0;
-  left: 70%;
+  left: 65%;
   width: 2px;
   height: 100%;
   background-color: #555;

@@ -40,7 +40,7 @@ import NavBar from "@/components/NavBar.vue";
 import Upload from "@/components/Upload.vue";
 import { onMounted, ref, watchEffect } from "vue";
 import { storeToRefs } from "pinia";
-import { IStoredMasks, IReplaceMask, ILoadUrls } from "@/models/dataType";
+import { IStoredMasks, IReplaceMask, ILoadUrls, IRegRquest } from "@/models/dataType";
 import {
   useFileCountStore,
   useNrrdCaseUrlsStore,
@@ -92,6 +92,7 @@ let loadReg = false;
 let currentCaseId = "";
 let showIntro = ref(false)
 
+
 let state = {
     introduction: showIntro.value,
     showContrast: false,
@@ -106,6 +107,13 @@ let state = {
 type selecedType = {
   [key: string]: boolean;
 };
+// type TnrrdTools = {
+//   spaceOrigin:{x:number[], y:number[], z:number[]};
+//   sphereRadius:number;
+//   [key: string]: any;
+// }
+
+let toolsState:any
 
 const { cases } = storeToRefs(useFileCountStore());
 const { getFilesNames } = useFileCountStore();
@@ -138,6 +146,10 @@ onMounted(async () => {
   
   nrrdTools.setEraserUrls(eraserUrls);
 
+  // sphere plan b
+  toolsState = nrrdTools.getNrrdToolsSettings()
+  // toolsState.spherePlanB = false;
+
   loadBarMain = Copper.loading();
 
   loadingContainer = loadBarMain.loadingContainer;
@@ -150,6 +162,7 @@ onMounted(async () => {
       Copper.fullScreenListenner(base_container.value as HTMLDivElement);
     }
   });
+
 
   setupGui();
   loadModel("nrrd_tools");
@@ -449,6 +462,7 @@ async function loadModel(name: string) {
 const loadAllNrrds = (urls: Array<string>) => {
   switchAnimationStatus("none");
   fileNum.value = urls.length;
+  
   allSlices = [];
   const mainPreArea = (
     volume: any,
@@ -505,11 +519,15 @@ function setupGui() {
       }
       regAllSlices.length = 0;
       originAllSlices.length = 0;
+      // temprary disable this function
+      revokeAppUrls(loadedUrls);
+      loadedUrls = {};
 
       currentCaseId = value;
       await getInitData();
       const details = cases.value?.details
       emitter.emit("casename", {currentCaseId,details})
+      
       if (loadedUrls[value]) {
         switchAnimationStatus(
           "flex",
@@ -525,11 +543,13 @@ function setupGui() {
       } else {
         switchAnimationStatus("flex", "Prepare Nrrd files, please wait......");
         await getCaseFileUrls(value);
-        if (caseUrls.value) {
+        
+        if (!!caseUrls.value) {
           urls = caseUrls.value.nrrdUrls;
           loadedUrls[currentCaseId] = caseUrls.value;
         }
       }
+      
       readyToLoad(urls);
       loadCases = true;
       setUpGuiAfterLoading()
@@ -569,7 +589,13 @@ function setUpGuiAfterLoading(){
           return;
         }
 
-        if(!(!!regUrls.value?.nrrdUrls&&regUrls.value?.nrrdUrls.length>0)) await getRegNrrdUrls(currentCaseId);
+        const reQuestInfo:IRegRquest = {
+          name:currentCaseId,
+          radius: toolsState?.sphereRadius,
+          origin: toolsState?.sphereOrigin.z
+        }
+
+        if(!(!!regUrls.value?.nrrdUrls&&regUrls.value?.nrrdUrls.length>0)) await getRegNrrdUrls(reQuestInfo);
         if(!!regUrls.value?.nrrdUrls&&regUrls.value?.nrrdUrls.length>0){
           urls = regUrls.value.nrrdUrls;
           readyToLoad(urls);
