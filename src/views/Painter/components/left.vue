@@ -24,7 +24,7 @@
     ></Upload>
   </div>
   <div>
-    <Logo />
+
     <Bottom />
   </div>
 </template>
@@ -35,7 +35,6 @@ import "copper3d/dist/css/style.css";
 // import * as Copper from "@/ts/index"
 import Intro from "./intro.vue";
 import Bottom from "./bottom.vue";
-import Logo from "@/components/logo.vue";
 import NavBar from "@/components/NavBar.vue";
 import Upload from "@/components/Upload.vue";
 import { onMounted, ref, watchEffect } from "vue";
