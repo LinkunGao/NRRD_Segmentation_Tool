@@ -13,8 +13,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import LeftPanel from "./components/left.vue";
-import RightPanel from "./components/right.vue";
+import LeftPanel from "./components/left-panel-core/left.vue";
+import RightPanel from "./components/right-panel-core/right.vue";
 import emitter from "@/utils/bus";
 import Logo from "@/components/logo.vue";
 
@@ -59,6 +59,7 @@ onMounted(() => {
 });
 
 function togglePanelActive(panel:string){
+  
   switch (panel) {
     case "left":
       left_container.value?.classList.toggle("panel_active")
@@ -70,8 +71,6 @@ function togglePanelActive(panel:string){
     break;
   }
   emitter.emit("resize", true);
-  
-  
 }
 </script>
 
