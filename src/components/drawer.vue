@@ -2,7 +2,7 @@
   <div class="wrap" ref="container">
     <div class="nav">
       <div class="menu">
-        <div v-for="item in viewData" class="item" @click="onSigleClick(item.label)" @dblclick="onDoubleClick(item.label)">
+        <div v-for="item in viewData" class="item" @click.stop="onSigleClick(item.label)" @dblclick.stop="onDoubleClick(item.label)">
           <div class="light"></div>
           <div class="licon"><span class="iconfont"><img :src="item.img" alt=""/></span></div>
           <div class="con">{{ item.name }}</div>
@@ -88,7 +88,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   transition: 0.5s;
-  z-index: 100;
+  z-index: 99;
 }
 .nav {
   position: absolute;

@@ -11,6 +11,7 @@
   position: fixed;
   bottom: 32px;
   left: 15px;
+  z-index: 100;
 }
 .logo img {
   width: 100%;
