@@ -2,8 +2,8 @@
   <div id="bg_2" ref="bg">
     <div v-show="openLoading" ref="loading_c" class="loading"></div>
     <div class="value-panel">
-      <div><span>Tumuor volume:</span> <span>{{ volume }} mm<sup>3</sup></span></div>
-      <div><span>Tumuor extent:</span> <span>71</span></div>
+      <div><span>Tumour volume:</span> <span>{{ volume }} cm<sup>3</sup></span></div>
+      <div><span>Tumour extent:</span> <span>71 mm</span></div>
       <div class="skin"><span>Skin:</span> <span>27 mm</span></div>
       <div class="ribcage"><span>Ribcage:</span> <span>36 mm</span></div>
       <div class="nipple"><span>Nipple:</span> <span>{{ nippleDist }} mm</span></div>
@@ -104,7 +104,7 @@ onMounted(() => {
         loadNrrd(maskNrrd.value as string,"", c_gui);
       }else{
         const volumeJson = JSON.parse(event.data)
-        volume.value = Math.ceil(volumeJson.volume)
+        volume.value = Math.ceil(volumeJson.volume)/1000;
       }
       clearInterval(timer as NodeJS.Timer)
     }else{
@@ -145,11 +145,12 @@ onMounted(() => {
     await getMaskNrrd(casename);
     if(case_detail.has_mesh){
       await getMaskMeshObj(casename);
-      volume.value = Math.ceil(maskMeshObj.value.meshVolume as number)
+      volume.value = Math.ceil(maskMeshObj.value.meshVolume as number)/1000;
       loadNrrd(maskNrrd.value as string, maskMeshObj.value.maskMeshObjUrl as string, c_gui);
       // loadNrrd(maskNrrd.value as string, "/NRRD_Segmentation_Tool/mesh_spacing.obj" as string, c_gui);
     }else{
       loadNrrd(maskNrrd.value as string,"", c_gui);
+      initPanelValue()
     } 
 
   })
@@ -162,6 +163,12 @@ onMounted(() => {
 //     loadNrrd(maskNrrd.value as string,"/NRRD_Segmentation_Tool/mask.obj", c_gui);
 //   }
 // }
+
+function initPanelValue(){
+  volume.value = 0;
+  nippleDist.value = "L 0";
+  nippleClock.value =  "@ 0:0";
+}
 
 function requestUpdateMesh(){
  const intervalId = setInterval(()=>{
@@ -356,7 +363,7 @@ const resetSliceIndex = () => {
 }
 
 const resetNrrdImage = ()=>{
-  panelOperator.dispose();
+  // panelOperator.dispose();
   copperScene.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view.json");
   nrrdMeshes.x.visible = true;
   nrrdMeshes.y.visible = true;
@@ -370,8 +377,8 @@ const resetNrrdImage = ()=>{
 
 
 const handleViewSigleClick = (view:string)=>{
-  panelOperator.start()
-  copperScene.controls.mouseButtons.LEFT = -1;
+  // panelOperator.start()
+  // copperScene.controls.mouseButtons.LEFT = -1;
   clickCount ++;
   if(clickCount===1){
     clickTimer = setTimeout(()=>{
@@ -380,19 +387,19 @@ const handleViewSigleClick = (view:string)=>{
           nrrdMeshes.x.visible = true;
           nrrdMeshes.y.visible = false;
           nrrdMeshes.z.visible = false;
-          panelOperator.setSlicePrams(loadNrrdSlices.x);
+          // panelOperator.setSlicePrams(loadNrrdSlices.x);
           break;
         case "axial":
           nrrdMeshes.x.visible = false;
           nrrdMeshes.y.visible = false;
           nrrdMeshes.z.visible = true;
-          panelOperator.setSlicePrams(loadNrrdSlices.z);
+          // panelOperator.setSlicePrams(loadNrrdSlices.z);
           break;
         case "coronal":
           nrrdMeshes.x.visible = false;
           nrrdMeshes.y.visible = true;
           nrrdMeshes.z.visible = false;
-          panelOperator.setSlicePrams(loadNrrdSlices.y);
+          // panelOperator.setSlicePrams(loadNrrdSlices.y);
           break;
         case "clock":
           validFlag = !validFlag;
@@ -411,14 +418,14 @@ const handleViewSigleClick = (view:string)=>{
 const handleViewsDoubleClick = (view:string)=>{
   !!clickTimer && clearTimeout(clickTimer);
   clickCount = 0;
-  copperScene.controls.mouseButtons.LEFT = -1;
+  // copperScene.controls.mouseButtons.LEFT = -1;
   copperScene.controls.reset();
   switch (view) {
     case "sagittal":
       nrrdMeshes.x.visible = true;
       nrrdMeshes.y.visible = false;
       nrrdMeshes.z.visible = false;
-      panelOperator.setSlicePrams(loadNrrdSlices.x);
+      // panelOperator.setSlicePrams(loadNrrdSlices.x);
       copperScene.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view_sagittal.json");
       break;
     
@@ -426,7 +433,7 @@ const handleViewsDoubleClick = (view:string)=>{
       nrrdMeshes.x.visible = false;
       nrrdMeshes.y.visible = false;
       nrrdMeshes.z.visible = true;
-      panelOperator.setSlicePrams(loadNrrdSlices.z);
+      // panelOperator.setSlicePrams(loadNrrdSlices.z);
       copperScene.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view.json");
       break;
   
@@ -434,7 +441,7 @@ const handleViewsDoubleClick = (view:string)=>{
       nrrdMeshes.x.visible = false;
       nrrdMeshes.y.visible = true;
       nrrdMeshes.z.visible = false;
-      panelOperator.setSlicePrams(loadNrrdSlices.y);
+      // panelOperator.setSlicePrams(loadNrrdSlices.y);
       copperScene.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view_coronal.json");
       break;
   } 
