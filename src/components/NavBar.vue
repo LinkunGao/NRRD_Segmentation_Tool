@@ -161,10 +161,11 @@ watchEffect(() => {
   --el-slider__bar-bg-color: red !important;
 }
 .nav {
-  position: fixed;
+  /* position: fixed;
   bottom: 25px;
+  left: 10px; */
   height: 60px;
-  width: 100%;
+  width: 90%;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -175,8 +176,8 @@ watchEffect(() => {
   user-select: none;
 }
 .nav .content {
-  position: relative;
-  width: 70%;
+  /* position: relative; */
+  width: 100%;
   height: 100%;
   background-color: #edf1f4;
   padding: 0 20px;
