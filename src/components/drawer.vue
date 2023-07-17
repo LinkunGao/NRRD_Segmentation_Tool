@@ -37,11 +37,11 @@ const viewData = [
   label:"coronal",
   img:coronalImg
   },
-  {
-  name:"Clock function",
-  label:"clock",
-  img:clockImg
-  },
+  // {
+  // name:"Clock function",
+  // label:"clock",
+  // img:clockImg
+  // },
   {
   name:"Reset views",
   label:"reset",
