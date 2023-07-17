@@ -10,7 +10,8 @@ import {
   useMaskNrrd,
   useMaskObjMesh,
   useClearMaskMesh,
-  useNrrdRegisterCase
+  useNrrdRegisterCase,
+  useNrrdOriginCase
 } from "@/utils/api";
 import {
   INrrdCaseNames,
@@ -56,6 +57,18 @@ export const useRegNrrdUrlsStore = defineStore("getRegNrrdFiles", () => {
   return {
     regUrls,
     getRegNrrdUrls,
+  };
+});
+
+export const useOriginNrrdUrlsStore = defineStore("getOriginNrrdFiles", () => {
+  const originUrls = ref<ICaseRegUrls>();
+  const getOriginNrrdUrls = async (name: string) => {
+    originUrls.value = await useNrrdOriginCase(name);
+  };
+
+  return {
+    originUrls,
+    getOriginNrrdUrls,
   };
 });
 
