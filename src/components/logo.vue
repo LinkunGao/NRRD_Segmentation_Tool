@@ -10,7 +10,7 @@
   height: 2.1vw;
   position: fixed;
   bottom: 32px;
-  left: 15px;
+  right: 15px;
   z-index: 100;
 }
 .logo img {
