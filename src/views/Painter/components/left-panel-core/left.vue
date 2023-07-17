@@ -5,7 +5,8 @@
     </div>
     <div ref="c_gui" id="gui"></div>
     <div ref="nrrd_c" class="nrrd_c"></div>
-    <NavBar
+    <div class="navBar" ref="navBar">
+      <NavBar
       :file-num="fileNum"
       :max="max"
       :immediate-slice-num="immediateSliceNum"
@@ -17,6 +18,8 @@
       @on-save="onSaveMask"
       @on-open-dialog="onOpenDialog"
     ></NavBar>
+    </div>
+   
     <Upload
       :dialog="dialog"
       @on-close-dialog="onCloseDialog"
@@ -49,7 +52,8 @@ import {
   useSaveMasksStore,
   useMaskStore,
   useClearMaskMeshStore,
-  useRegNrrdUrlsStore
+  useRegNrrdUrlsStore,
+  useOriginNrrdUrlsStore
 } from "@/store/pinia_store";
 import { findCurrentCase, revokeAppUrls, revokeRegisterNrrdImages, getEraserUrlsForOffLine } from "../../tools";
 import emitter from "@/utils/bus";
@@ -67,6 +71,7 @@ let base_container = ref<HTMLDivElement>();
 let intro = ref<HTMLDivElement>();
 let c_gui = ref<HTMLDivElement>();
 let nrrd_c = ref<HTMLDivElement>();
+let navBar = ref<HTMLDivElement>();
 
 let scene: Copper.copperScene | undefined;
 let pre_slices = ref();
@@ -77,8 +82,8 @@ let nrrdTools: Copper.nrrd_tools;
 let loadBarMain: Copper.loadingBarType;
 let loadingContainer: HTMLDivElement, progress: HTMLDivElement;
 let allSlices: Array<any> = [];
+let defaultRegAllSlices: Array<any> = [];
 let originAllSlices: Array<any> = [];
-let regAllSlices: Array<any> = [];
 let regCkeckbox: GUIController
 let urls: Array<string> = [];
 let loadedUrls: ILoadUrls = {};
@@ -87,17 +92,18 @@ let filesCount = ref(0);
 let selectedContrastFolder: GUI;
 let firstLoad = true;
 let loadCases = true;
-let loadReg = false;
+let loadOrigin = false;
 
 let currentCaseId = "";
 let showIntro = ref(false)
+let regCheckboxElement:HTMLInputElement;
 
 
 let state = {
     introduction: showIntro.value,
     showContrast: false,
     switchCase: "",
-    showRegisterImages:false,
+    showRegisterImages:true,
     release: () => {
       revokeAppUrls(loadedUrls);
       loadedUrls = {};
@@ -119,8 +125,10 @@ const { cases } = storeToRefs(useFileCountStore());
 const { getFilesNames } = useFileCountStore();
 const { caseUrls } = storeToRefs(useNrrdCaseUrlsStore());
 const { getCaseFileUrls } = useNrrdCaseUrlsStore();
-const { regUrls } = storeToRefs(useRegNrrdUrlsStore());
-const { getRegNrrdUrls } = useRegNrrdUrlsStore();
+// const { regUrls } = storeToRefs(useRegNrrdUrlsStore());
+// const { getRegNrrdUrls } = useRegNrrdUrlsStore();
+const { originUrls } = storeToRefs(useOriginNrrdUrlsStore());
+const { getOriginNrrdUrls } = useOriginNrrdUrlsStore();
 const { sendInitMask } = useInitMarksStore();
 const { sendReplaceMask } = useReplaceMarksStore();
 const { sendSaveMask } = useSaveMasksStore();
@@ -167,6 +175,14 @@ onMounted(async () => {
   setupGui();
   loadModel("nrrd_tools");
   appRenderer.animate();
+
+  emitter.on("leftFullScreen", (flag) => {
+      if(flag){
+        (navBar.value as HTMLDivElement).style.width = "90%";
+      }else{
+        (navBar.value as HTMLDivElement).style.width = "60%";
+      }
+    });
 });
 
 async function getInitData() {
@@ -335,20 +351,20 @@ watchEffect(() => {
       return a.order - b.order;
     });
     
-    if(loadReg){
+    if(loadOrigin){
 
       nrrdTools.switchAllSlicesArrayData(allSlices);
-      loadReg = false;
+      loadOrigin = false;
       switchAnimationStatus("none");
       setTimeout(()=>switchRegCheckBoxStatus(regCkeckbox.domElement, "auto", "1"), 1000);
-      if(regAllSlices.length===0) regAllSlices = [...allSlices];
+      if(originAllSlices.length===0) originAllSlices = [...allSlices];
 
     }else{
     nrrdTools.clear();
     nrrdTools.setShowInMainArea(true);
     nrrdTools.setAllSlices(allSlices);
     
-    originAllSlices = [...allSlices]
+    defaultRegAllSlices = [...allSlices]
 
     initSliceIndex.value = nrrdTools.getCurrentSliceIndex();
 
@@ -513,12 +529,12 @@ function setupGui() {
     .onChange(async (value) => {
       switchAnimationStatus("flex", "Saving masks data, please wait......");
       // revoke the regsiter images
-      if(!!regUrls.value&&regUrls.value.nrrdUrls.length>0){
-        revokeRegisterNrrdImages(regUrls.value.nrrdUrls)
-        regUrls.value.nrrdUrls.length = 0;
+      if(!!originUrls.value&&originUrls.value.nrrdUrls.length>0){
+        revokeRegisterNrrdImages(originUrls.value.nrrdUrls)
+        originUrls.value.nrrdUrls.length = 0;
       }
-      regAllSlices.length = 0;
       originAllSlices.length = 0;
+      defaultRegAllSlices.length = 0;
       // temprary disable this function
       revokeAppUrls(loadedUrls);
       loadedUrls = {};
@@ -565,26 +581,28 @@ function setUpGuiAfterLoading(){
     
     gui.removeFolder(optsGui)
     optsGui = undefined;
-    state.showRegisterImages = false;
+    state.showRegisterImages = true;
   }
   optsGui = gui.addFolder("opts");
-  regCkeckbox = optsGui.add(state,"showRegisterImages").onChange(async ()=>{
+  regCkeckbox = optsGui.add(state,"showRegisterImages");
+  regCheckboxElement = regCkeckbox.domElement.childNodes[0] as HTMLInputElement;
+  regCkeckbox.onChange(async ()=>{
 
-    if((regCkeckbox.domElement.childNodes[0] as HTMLInputElement).disabled ){
+    if(regCheckboxElement.disabled ){
       state.showRegisterImages = !state.showRegisterImages;
       return;
     }
 
     switchRegCheckBoxStatus(regCkeckbox.domElement, "none", "0.5");
-    loadReg = true;
+    loadOrigin = true;
     switchAnimationStatus(
           "flex",
           "Prepare and Loading data, please wait......"
         );
-      if(state.showRegisterImages){
+      if(!state.showRegisterImages){
         
-        if(regAllSlices.length>0){
-          allSlices = [...regAllSlices];
+        if(originAllSlices.length>0){
+          allSlices = [...originAllSlices];
           filesCount.value = 5;
           return;
         }
@@ -595,15 +613,15 @@ function setUpGuiAfterLoading(){
           origin: toolsState?.sphereOrigin.z
         }
 
-        if(!(!!regUrls.value?.nrrdUrls&&regUrls.value?.nrrdUrls.length>0)) await getRegNrrdUrls(reQuestInfo);
-        if(!!regUrls.value?.nrrdUrls&&regUrls.value?.nrrdUrls.length>0){
-          urls = regUrls.value.nrrdUrls;
+        if(!(!!originUrls.value?.nrrdUrls&&originUrls.value?.nrrdUrls.length>0)) await getOriginNrrdUrls(reQuestInfo.name);
+        if(!!originUrls.value?.nrrdUrls&&originUrls.value?.nrrdUrls.length>0){
+          urls = originUrls.value.nrrdUrls;
           readyToLoad(urls);
         }
         
       }else{        
-        if(originAllSlices.length>0){
-          allSlices = [...originAllSlices];
+        if(defaultRegAllSlices.length>0){
+          allSlices = [...defaultRegAllSlices];
           filesCount.value = 5;
           return;
         }
@@ -657,6 +675,16 @@ function switchRegCheckBoxStatus(checkbox:HTMLElement, pointerEvents:"none"|"aut
   justify-content: center;
   align-items: center;
 }
+
+.navBar{
+  position: fixed;
+  bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60%;
+}
+
 .copper3d_sliceNumber {
   /* position: fixed !important; */
   position: relative;
