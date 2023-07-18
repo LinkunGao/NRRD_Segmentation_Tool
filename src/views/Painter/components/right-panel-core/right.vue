@@ -142,7 +142,8 @@ onMounted(() => {
       );
     
     casename = case_infos.currentCaseId;
-    await getMaskNrrd(casename);
+    // await getMaskNrrd(casename);
+    maskNrrd.value = case_infos.maskNrrd;
     if(case_detail.has_mesh){
       await getMaskMeshObj(casename);
       volume.value = Math.ceil(maskMeshObj.value.meshVolume as number)/1000;
@@ -152,7 +153,11 @@ onMounted(() => {
       loadNrrd(maskNrrd.value as string,"", c_gui);
       initPanelValue()
     } 
+  })
 
+  emitter.on("showRegBtnToRight",(maskNrrdMeshes)=>{
+    console.log(maskNrrdMeshes);
+    
   })
   appRenderer.animate();
 });
