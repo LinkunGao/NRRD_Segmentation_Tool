@@ -84,6 +84,9 @@ let loadingContainer: HTMLDivElement, progress: HTMLDivElement;
 let allSlices: Array<any> = [];
 let defaultRegAllSlices: Array<any> = [];
 let originAllSlices: Array<any> = [];
+let allLoadedMeshes: Array<Copper.nrrdMeshesType> = [];
+let defaultRegAllMeshes: Array<Copper.nrrdMeshesType> = [];
+let originAllMeshes: Array<Copper.nrrdMeshesType> = [];
 let regCkeckbox: GUIController
 let urls: Array<string> = [];
 let loadedUrls: ILoadUrls = {};
@@ -189,10 +192,14 @@ async function getInitData() {
   await getFilesNames();
 }
 
-const readyToLoad = (urlsArray: Array<string>) => {
+const readyToLoad = (urlsArray: Array<string>, name:string) => {
   fileNum.value = urlsArray.length;
   urls = urlsArray;
-  if (urls.length > 0) loadAllNrrds(urls);
+  if (urls.length > 0){
+    return new Promise<Array<Copper.nrrdMeshesType>>((resolve, reject)=>{
+      loadAllNrrds(urls, name, resolve, reject);
+    })
+  } 
 };
 
 const onSaveMask = async (flag: boolean) => {
@@ -292,6 +299,7 @@ const loadJsonMasks = (url: string) => {
 };
 
 const setMaskData = () => {
+
   if (loadedUrls[currentCaseId]) {
     if (cases.value) {
       const currentCaseDetail = findCurrentCase(
@@ -347,6 +355,7 @@ watchEffect(() => {
     filesCount.value === urls.length
   ) {
     console.log("All files ready!");
+
     allSlices.sort((a: any, b: any) => {
       return a.order - b.order;
     });
@@ -357,14 +366,18 @@ watchEffect(() => {
       loadOrigin = false;
       switchAnimationStatus("none");
       setTimeout(()=>switchRegCheckBoxStatus(regCkeckbox.domElement, "auto", "1"), 1000);
-      if(originAllSlices.length===0) originAllSlices = [...allSlices];
+      if(originAllSlices.length===0){
+        originAllSlices = [...allSlices];
+        originAllMeshes = [...allLoadedMeshes];
+      } 
 
     }else{
     nrrdTools.clear();
     nrrdTools.setShowInMainArea(true);
     nrrdTools.setAllSlices(allSlices);
     
-    defaultRegAllSlices = [...allSlices]
+    defaultRegAllSlices = [...allSlices];
+    defaultRegAllMeshes = [...allLoadedMeshes];
 
     initSliceIndex.value = nrrdTools.getCurrentSliceIndex();
 
@@ -462,24 +475,26 @@ async function loadModel(name: string) {
         switchAnimationStatus("flex", "Prepare Nrrd files, please wait......");
         currentCaseId = cases.value?.names[0];
         const details = cases.value?.details
-        emitter.emit("casename", {currentCaseId,details})
+        
         await getCaseFileUrls(cases.value?.names[0]);
         if (caseUrls.value) {
           urls = caseUrls.value.nrrdUrls;
           // every time switch cases, we store it
           loadedUrls[currentCaseId] = caseUrls.value;
+          emitter.emit("casename", {currentCaseId,details,maskNrrd:urls[1]})
         }
-        loadAllNrrds(urls);
+        loadAllNrrds(urls, "registration");
       }
     }
   }
 }
 
-const loadAllNrrds = (urls: Array<string>) => {
+const loadAllNrrds = (urls: Array<string>,name:string, resolve?:(value: Array<Copper.nrrdMeshesType>) => void, reject?:(reason?: any) => void) => {
   switchAnimationStatus("none");
   fileNum.value = urls.length;
   
   allSlices = [];
+  allLoadedMeshes = [];
   const mainPreArea = (
     volume: any,
     nrrdMesh: Copper.nrrdMeshesType,
@@ -488,6 +503,7 @@ const loadAllNrrds = (urls: Array<string>) => {
   ) => {
     const newNrrdSlice = Object.assign(nrrdSlices, { order: 0 });
     allSlices.push(newNrrdSlice);
+    allLoadedMeshes.push(nrrdMesh);
     pre_slices.value = nrrdSlices;
 
     filesCount.value += 1;
@@ -506,7 +522,11 @@ const loadAllNrrds = (urls: Array<string>) => {
       ) => {
         const newNrrdSlice = Object.assign(nrrdSlices, { order: i });
         allSlices.push(newNrrdSlice);
+        allLoadedMeshes.push(nrrdMesh);
         filesCount.value += 1;
+        if(filesCount.value>=5){
+         !!resolve && resolve(allLoadedMeshes);
+        }
       }
     );
   }
@@ -535,6 +555,8 @@ function setupGui() {
       }
       originAllSlices.length = 0;
       defaultRegAllSlices.length = 0;
+      originAllMeshes.length = 0;
+      defaultRegAllMeshes.length = 0;
       // temprary disable this function
       revokeAppUrls(loadedUrls);
       loadedUrls = {};
@@ -566,7 +588,7 @@ function setupGui() {
         }
       }
       
-      readyToLoad(urls);
+      readyToLoad(urls, "registration");
       loadCases = true;
       setUpGuiAfterLoading()
     });
@@ -603,7 +625,9 @@ function setUpGuiAfterLoading(){
         
         if(originAllSlices.length>0){
           allSlices = [...originAllSlices];
+          allLoadedMeshes = [...originAllMeshes];
           filesCount.value = 5;
+          emitter.emit("showRegBtnToRight",{maskNrrdMeshes:originAllMeshes[1]})
           return;
         }
 
@@ -616,18 +640,22 @@ function setUpGuiAfterLoading(){
         if(!(!!originUrls.value?.nrrdUrls&&originUrls.value?.nrrdUrls.length>0)) await getOriginNrrdUrls(reQuestInfo.name);
         if(!!originUrls.value?.nrrdUrls&&originUrls.value?.nrrdUrls.length>0){
           urls = originUrls.value.nrrdUrls;
-          readyToLoad(urls);
+          readyToLoad(urls, "origin")?.then((meshes)=>{
+            emitter.emit("showRegBtnToRight",{maskNrrdMeshes:meshes[1]})
+          });
         }
         
       }else{        
         if(defaultRegAllSlices.length>0){
           allSlices = [...defaultRegAllSlices];
+          allLoadedMeshes = [...defaultRegAllMeshes];
+          emitter.emit("showRegBtnToRight",{maskNrrdMeshes:defaultRegAllMeshes[1]})
           filesCount.value = 5;
           return;
         }
         if (caseUrls.value) {
           urls = caseUrls.value.nrrdUrls;
-          readyToLoad(urls);
+          readyToLoad(urls, "registration");
         }
       }
   })
