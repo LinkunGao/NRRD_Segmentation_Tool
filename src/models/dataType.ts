@@ -67,7 +67,8 @@ export interface ILoadUrls {
 
 export interface ICaseDetails{
   currentCaseId:string;
-  details:Array<IDetails>
+  details:Array<IDetails>;
+  maskNrrd:string
 }
 
 export interface IRegRquest{
