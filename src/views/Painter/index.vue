@@ -23,6 +23,7 @@ const splitBar = ref<HTMLDivElement>();
 
 const left_container = ref<HTMLDivElement>();
 const right_container = ref<HTMLDivElement>();
+let leftFullScreen = false;
 
 let isDragging = false;
 onMounted(() => {
@@ -62,7 +63,9 @@ function togglePanelActive(panel:string){
   
   switch (panel) {
     case "left":
-      left_container.value?.classList.toggle("panel_active")
+      left_container.value?.classList.toggle("panel_active");
+      leftFullScreen = !leftFullScreen;
+      emitter.emit("leftFullScreen", leftFullScreen);
       
       break;
     case "right":

@@ -160,7 +160,48 @@ export async function useNrrdRegisterCase(requestInfo: IRegRquest): Promise<ICas
   return new Promise((resolve, reject) => {
     let urls:ICaseRegUrls = { nrrdUrls: [] };
     http.getBlob("/casereg", {data: JSON.stringify(requestInfo)}).then((zipBlob) => {
-      const zip = new JSZip();
+      unzipNrrdFiles(zipBlob, urls, resolve, reject);
+      // const zip = new JSZip();
+      // // Extract the contents of the zip archive
+      // zip.loadAsync(zipBlob as any).then((contents) => {
+      //   const nrrdNames = [];
+      //   for (let prop in contents.files) {
+      //     if (prop.includes(".nrrd")) {
+      //       nrrdNames.push(prop);
+      //     }
+      //   }
+      //   const promises: any = [];
+      //   nrrdNames.forEach((name) => {
+      //     const file = contents.files[name];
+      //     promises.push(file.async("arraybuffer"));
+      //   });
+      //   Promise.all(promises)
+      //     .then((values) => {
+      //       values.forEach((item, index) => {
+      //         urls.nrrdUrls.push(URL.createObjectURL(new Blob([item])));
+      //       });
+      //       resolve(urls);
+      //     })
+      //     .catch((err) => {
+      //       reject(err);
+      //     });
+      // });
+    });
+  });
+}
+
+export async function useNrrdOriginCase(name: string): Promise<ICaseUrls> {
+  return new Promise((resolve, reject) => {
+    let urls:ICaseRegUrls = { nrrdUrls: [] };
+    http.getBlob("/caseorigin", {name}).then((zipBlob) => {
+      unzipNrrdFiles(zipBlob, urls, resolve, reject);
+    });
+  });
+}
+
+
+function unzipNrrdFiles(zipBlob:any, urls:ICaseRegUrls, resolve:(value: ICaseUrls | PromiseLike<ICaseUrls>) => void, reject:(reason?: any) => void ){
+  const zip = new JSZip();
       // Extract the contents of the zip archive
       zip.loadAsync(zipBlob as any).then((contents) => {
         const nrrdNames = [];
@@ -185,6 +226,4 @@ export async function useNrrdRegisterCase(requestInfo: IRegRquest): Promise<ICas
             reject(err);
           });
       });
-    });
-  });
 }
