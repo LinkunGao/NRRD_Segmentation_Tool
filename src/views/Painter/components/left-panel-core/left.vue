@@ -43,7 +43,7 @@ import NavBar from "@/components/NavBar.vue";
 import Upload from "@/components/Upload.vue";
 import { onMounted, ref, watchEffect } from "vue";
 import { storeToRefs } from "pinia";
-import { IStoredMasks, IReplaceMask, ILoadUrls, IRegRquest } from "@/models/dataType";
+import { IStoredMasks, IReplaceMask, ILoadUrls, IRegRquest,ILoadedMeshes } from "@/models/dataType";
 import {
   useFileCountStore,
   useNrrdCaseUrlsStore,
@@ -84,9 +84,9 @@ let loadingContainer: HTMLDivElement, progress: HTMLDivElement;
 let allSlices: Array<any> = [];
 let defaultRegAllSlices: Array<any> = [];
 let originAllSlices: Array<any> = [];
-let allLoadedMeshes: Array<Copper.nrrdMeshesType> = [];
-let defaultRegAllMeshes: Array<Copper.nrrdMeshesType> = [];
-let originAllMeshes: Array<Copper.nrrdMeshesType> = [];
+let allLoadedMeshes: Array<ILoadedMeshes> = [];
+let defaultRegAllMeshes: Array<ILoadedMeshes> = [];
+let originAllMeshes: Array<ILoadedMeshes> = [];
 let regCkeckbox: GUIController
 let urls: Array<string> = [];
 let loadedUrls: ILoadUrls = {};
@@ -359,6 +359,9 @@ watchEffect(() => {
     allSlices.sort((a: any, b: any) => {
       return a.order - b.order;
     });
+    allLoadedMeshes.sort((a: any, b: any) => {
+      return a.order - b.order;
+    });
     
     if(loadOrigin){
 
@@ -502,10 +505,10 @@ const loadAllNrrds = (urls: Array<string>,name:string, resolve?:(value: Array<Co
     // gui?: GUI
   ) => {
     const newNrrdSlice = Object.assign(nrrdSlices, { order: 0 });
+    const newNrrdMesh = Object.assign(nrrdMesh, { order: 0 });
     allSlices.push(newNrrdSlice);
-    allLoadedMeshes.push(nrrdMesh);
+    allLoadedMeshes.push(newNrrdMesh);
     pre_slices.value = nrrdSlices;
-
     filesCount.value += 1;
   };
   scene?.loadNrrd(urls[0], loadBarMain, true, mainPreArea);
@@ -521,10 +524,14 @@ const loadAllNrrds = (urls: Array<string>,name:string, resolve?:(value: Array<Co
         nrrdSlices: Copper.nrrdSliceType
       ) => {
         const newNrrdSlice = Object.assign(nrrdSlices, { order: i });
+        const newNrrdMesh = Object.assign(nrrdMesh, { order: i });
         allSlices.push(newNrrdSlice);
-        allLoadedMeshes.push(nrrdMesh);
+        allLoadedMeshes.push(newNrrdMesh);
         filesCount.value += 1;
         if(filesCount.value>=5){
+          allLoadedMeshes.sort((a: any, b: any) => {
+            return a.order - b.order;
+          });
          !!resolve && resolve(allLoadedMeshes);
         }
       }
