@@ -76,3 +76,10 @@ export interface IRegRquest{
   radius?: number,
   origin?: number[]
 }
+
+export interface ILoadedMeshes{
+  x:THREE.Mesh;
+  y:THREE.Mesh;
+  z:THREE.Mesh;
+  order:number;
+}
