@@ -44,6 +44,7 @@ import Upload from "@/components/Upload.vue";
 import { onMounted, ref, watchEffect } from "vue";
 import { storeToRefs } from "pinia";
 import { IStoredMasks, IReplaceMask, ILoadUrls, IRegRquest,ILoadedMeshes } from "@/models/dataType";
+import {addNameToLoadedMeshes} from "./utils-left";
 import {
   useFileCountStore,
   useNrrdCaseUrlsStore,
@@ -492,7 +493,7 @@ async function loadModel(name: string) {
   }
 }
 
-const loadAllNrrds = (urls: Array<string>,name:string, resolve?:(value: Array<Copper.nrrdMeshesType>) => void, reject?:(reason?: any) => void) => {
+const loadAllNrrds = (urls: Array<string>, name:string, resolve?:(value: Array<Copper.nrrdMeshesType>) => void, reject?:(reason?: any) => void) => {
   switchAnimationStatus("none");
   fileNum.value = urls.length;
   
@@ -504,6 +505,7 @@ const loadAllNrrds = (urls: Array<string>,name:string, resolve?:(value: Array<Co
     nrrdSlices: Copper.nrrdSliceType
     // gui?: GUI
   ) => {
+    addNameToLoadedMeshes(nrrdMesh, name);
     const newNrrdSlice = Object.assign(nrrdSlices, { order: 0 });
     const newNrrdMesh = Object.assign(nrrdMesh, { order: 0 });
     allSlices.push(newNrrdSlice);
@@ -523,6 +525,7 @@ const loadAllNrrds = (urls: Array<string>,name:string, resolve?:(value: Array<Co
         nrrdMesh: Copper.nrrdMeshesType,
         nrrdSlices: Copper.nrrdSliceType
       ) => {
+        addNameToLoadedMeshes(nrrdMesh, name);
         const newNrrdSlice = Object.assign(nrrdSlices, { order: i });
         const newNrrdMesh = Object.assign(nrrdMesh, { order: i });
         allSlices.push(newNrrdSlice);
