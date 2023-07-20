@@ -197,7 +197,7 @@ const readyToLoad = (urlsArray: Array<string>, name:string) => {
   fileNum.value = urlsArray.length;
   urls = urlsArray;
   if (urls.length > 0){
-    return new Promise<Array<Copper.nrrdMeshesType>>((resolve, reject)=>{
+    return new Promise<{meshes:Array<Copper.nrrdMeshesType>,slices:any[]}>((resolve, reject)=>{
       loadAllNrrds(urls, name, resolve, reject);
     })
   } 
@@ -493,7 +493,7 @@ async function loadModel(name: string) {
   }
 }
 
-const loadAllNrrds = (urls: Array<string>, name:string, resolve?:(value: Array<Copper.nrrdMeshesType>) => void, reject?:(reason?: any) => void) => {
+const loadAllNrrds = (urls: Array<string>, name:string, resolve?:(value: {meshes:Array<Copper.nrrdMeshesType>,slices:any[]}) => void, reject?:(reason?: any) => void) => {
   switchAnimationStatus("none");
   fileNum.value = urls.length;
   
@@ -535,7 +535,10 @@ const loadAllNrrds = (urls: Array<string>, name:string, resolve?:(value: Array<C
           allLoadedMeshes.sort((a: any, b: any) => {
             return a.order - b.order;
           });
-         !!resolve && resolve(allLoadedMeshes);
+          allSlices.sort((a: any, b: any) => {
+            return a.order - b.order;
+          });
+         !!resolve && resolve({meshes:allLoadedMeshes, slices:allSlices});
         }
       }
     );
@@ -573,8 +576,6 @@ function setupGui() {
 
       currentCaseId = value;
       await getInitData();
-      const details = cases.value?.details
-      emitter.emit("casename", {currentCaseId,details})
       
       if (loadedUrls[value]) {
         switchAnimationStatus(
@@ -595,6 +596,8 @@ function setupGui() {
         if (!!caseUrls.value) {
           urls = caseUrls.value.nrrdUrls;
           loadedUrls[currentCaseId] = caseUrls.value;
+          const details = cases.value?.details
+          emitter.emit("casename", {currentCaseId,details, maskNrrd:urls[1]})
         }
       }
       
@@ -637,7 +640,7 @@ function setUpGuiAfterLoading(){
           allSlices = [...originAllSlices];
           allLoadedMeshes = [...originAllMeshes];
           filesCount.value = 5;
-          emitter.emit("showRegBtnToRight",{maskNrrdMeshes:originAllMeshes[1]})
+          emitter.emit("showRegBtnToRight",{maskNrrdMeshes:originAllMeshes[1],maskSlices:originAllSlices[1], url:urls[1], register:state.showRegisterImages})
           return;
         }
 
@@ -650,8 +653,8 @@ function setUpGuiAfterLoading(){
         if(!(!!originUrls.value?.nrrdUrls&&originUrls.value?.nrrdUrls.length>0)) await getOriginNrrdUrls(reQuestInfo.name);
         if(!!originUrls.value?.nrrdUrls&&originUrls.value?.nrrdUrls.length>0){
           urls = originUrls.value.nrrdUrls;
-          readyToLoad(urls, "origin")?.then((meshes)=>{
-            emitter.emit("showRegBtnToRight",{maskNrrdMeshes:meshes[1]})
+          readyToLoad(urls, "origin")?.then((data)=>{
+            emitter.emit("showRegBtnToRight",{maskNrrdMeshes:data.meshes[1], maskSlices:data.slices[1],url:urls[1],register:state.showRegisterImages})
           });
         }
         
@@ -659,7 +662,7 @@ function setUpGuiAfterLoading(){
         if(defaultRegAllSlices.length>0){
           allSlices = [...defaultRegAllSlices];
           allLoadedMeshes = [...defaultRegAllMeshes];
-          emitter.emit("showRegBtnToRight",{maskNrrdMeshes:defaultRegAllMeshes[1]})
+          emitter.emit("showRegBtnToRight",{maskNrrdMeshes:defaultRegAllMeshes[1],maskSlices:defaultRegAllSlices[1], url:urls[1], register:state.showRegisterImages})
           filesCount.value = 5;
           return;
         }

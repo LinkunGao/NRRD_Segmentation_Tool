@@ -158,3 +158,25 @@ export function valideClock(start:boolean,copperScene:Copper.copperScene, bg:HTM
       })
     }
   }
+
+  export function deepClone(obj:any, clonedObjects = new WeakMap()) {
+    if (obj === null || typeof obj !== "object") {
+      return obj;
+    }
+  
+    if (clonedObjects.has(obj)) {
+      return clonedObjects.get(obj);
+    }
+  
+    let newObj:any = Array.isArray(obj) ? [] : {};
+  
+    clonedObjects.set(obj, newObj);
+  
+    for (let key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        newObj[key] = deepClone(obj[key], clonedObjects);
+      }
+    }
+  
+    return newObj;
+  }
