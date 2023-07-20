@@ -43,7 +43,8 @@ import NavBar from "@/components/NavBar.vue";
 import Upload from "@/components/Upload.vue";
 import { onMounted, ref, watchEffect } from "vue";
 import { storeToRefs } from "pinia";
-import { IStoredMasks, IReplaceMask, ILoadUrls, IRegRquest } from "@/models/dataType";
+import { IStoredMasks, IReplaceMask, ILoadUrls, IRegRquest,ILoadedMeshes } from "@/models/dataType";
+import {addNameToLoadedMeshes} from "./utils-left";
 import {
   useFileCountStore,
   useNrrdCaseUrlsStore,
@@ -84,6 +85,9 @@ let loadingContainer: HTMLDivElement, progress: HTMLDivElement;
 let allSlices: Array<any> = [];
 let defaultRegAllSlices: Array<any> = [];
 let originAllSlices: Array<any> = [];
+let allLoadedMeshes: Array<ILoadedMeshes> = [];
+let defaultRegAllMeshes: Array<ILoadedMeshes> = [];
+let originAllMeshes: Array<ILoadedMeshes> = [];
 let regCkeckbox: GUIController
 let urls: Array<string> = [];
 let loadedUrls: ILoadUrls = {};
@@ -189,10 +193,14 @@ async function getInitData() {
   await getFilesNames();
 }
 
-const readyToLoad = (urlsArray: Array<string>) => {
+const readyToLoad = (urlsArray: Array<string>, name:string) => {
   fileNum.value = urlsArray.length;
   urls = urlsArray;
-  if (urls.length > 0) loadAllNrrds(urls);
+  if (urls.length > 0){
+    return new Promise<{meshes:Array<Copper.nrrdMeshesType>,slices:any[]}>((resolve, reject)=>{
+      loadAllNrrds(urls, name, resolve, reject);
+    })
+  } 
 };
 
 const onSaveMask = async (flag: boolean) => {
@@ -292,6 +300,7 @@ const loadJsonMasks = (url: string) => {
 };
 
 const setMaskData = () => {
+
   if (loadedUrls[currentCaseId]) {
     if (cases.value) {
       const currentCaseDetail = findCurrentCase(
@@ -347,7 +356,11 @@ watchEffect(() => {
     filesCount.value === urls.length
   ) {
     console.log("All files ready!");
+
     allSlices.sort((a: any, b: any) => {
+      return a.order - b.order;
+    });
+    allLoadedMeshes.sort((a: any, b: any) => {
       return a.order - b.order;
     });
     
@@ -357,14 +370,18 @@ watchEffect(() => {
       loadOrigin = false;
       switchAnimationStatus("none");
       setTimeout(()=>switchRegCheckBoxStatus(regCkeckbox.domElement, "auto", "1"), 1000);
-      if(originAllSlices.length===0) originAllSlices = [...allSlices];
+      if(originAllSlices.length===0){
+        originAllSlices = [...allSlices];
+        originAllMeshes = [...allLoadedMeshes];
+      } 
 
     }else{
     nrrdTools.clear();
     nrrdTools.setShowInMainArea(true);
     nrrdTools.setAllSlices(allSlices);
     
-    defaultRegAllSlices = [...allSlices]
+    defaultRegAllSlices = [...allSlices];
+    defaultRegAllMeshes = [...allLoadedMeshes];
 
     initSliceIndex.value = nrrdTools.getCurrentSliceIndex();
 
@@ -462,34 +479,38 @@ async function loadModel(name: string) {
         switchAnimationStatus("flex", "Prepare Nrrd files, please wait......");
         currentCaseId = cases.value?.names[0];
         const details = cases.value?.details
-        emitter.emit("casename", {currentCaseId,details})
+        
         await getCaseFileUrls(cases.value?.names[0]);
         if (caseUrls.value) {
           urls = caseUrls.value.nrrdUrls;
           // every time switch cases, we store it
           loadedUrls[currentCaseId] = caseUrls.value;
+          emitter.emit("casename", {currentCaseId,details,maskNrrd:urls[1]})
         }
-        loadAllNrrds(urls);
+        loadAllNrrds(urls, "registration");
       }
     }
   }
 }
 
-const loadAllNrrds = (urls: Array<string>) => {
+const loadAllNrrds = (urls: Array<string>, name:string, resolve?:(value: {meshes:Array<Copper.nrrdMeshesType>,slices:any[]}) => void, reject?:(reason?: any) => void) => {
   switchAnimationStatus("none");
   fileNum.value = urls.length;
   
   allSlices = [];
+  allLoadedMeshes = [];
   const mainPreArea = (
     volume: any,
     nrrdMesh: Copper.nrrdMeshesType,
     nrrdSlices: Copper.nrrdSliceType
     // gui?: GUI
   ) => {
+    addNameToLoadedMeshes(nrrdMesh, name);
     const newNrrdSlice = Object.assign(nrrdSlices, { order: 0 });
+    const newNrrdMesh = Object.assign(nrrdMesh, { order: 0 });
     allSlices.push(newNrrdSlice);
+    allLoadedMeshes.push(newNrrdMesh);
     pre_slices.value = nrrdSlices;
-
     filesCount.value += 1;
   };
   scene?.loadNrrd(urls[0], loadBarMain, true, mainPreArea);
@@ -504,9 +525,21 @@ const loadAllNrrds = (urls: Array<string>) => {
         nrrdMesh: Copper.nrrdMeshesType,
         nrrdSlices: Copper.nrrdSliceType
       ) => {
+        addNameToLoadedMeshes(nrrdMesh, name);
         const newNrrdSlice = Object.assign(nrrdSlices, { order: i });
+        const newNrrdMesh = Object.assign(nrrdMesh, { order: i });
         allSlices.push(newNrrdSlice);
+        allLoadedMeshes.push(newNrrdMesh);
         filesCount.value += 1;
+        if(filesCount.value>=5){
+          allLoadedMeshes.sort((a: any, b: any) => {
+            return a.order - b.order;
+          });
+          allSlices.sort((a: any, b: any) => {
+            return a.order - b.order;
+          });
+         !!resolve && resolve({meshes:allLoadedMeshes, slices:allSlices});
+        }
       }
     );
   }
@@ -535,14 +568,14 @@ function setupGui() {
       }
       originAllSlices.length = 0;
       defaultRegAllSlices.length = 0;
+      originAllMeshes.length = 0;
+      defaultRegAllMeshes.length = 0;
       // temprary disable this function
       revokeAppUrls(loadedUrls);
       loadedUrls = {};
 
       currentCaseId = value;
       await getInitData();
-      const details = cases.value?.details
-      emitter.emit("casename", {currentCaseId,details})
       
       if (loadedUrls[value]) {
         switchAnimationStatus(
@@ -563,10 +596,12 @@ function setupGui() {
         if (!!caseUrls.value) {
           urls = caseUrls.value.nrrdUrls;
           loadedUrls[currentCaseId] = caseUrls.value;
+          const details = cases.value?.details
+          emitter.emit("casename", {currentCaseId,details, maskNrrd:urls[1]})
         }
       }
       
-      readyToLoad(urls);
+      readyToLoad(urls, "registration");
       loadCases = true;
       setUpGuiAfterLoading()
     });
@@ -603,7 +638,9 @@ function setUpGuiAfterLoading(){
         
         if(originAllSlices.length>0){
           allSlices = [...originAllSlices];
+          allLoadedMeshes = [...originAllMeshes];
           filesCount.value = 5;
+          emitter.emit("showRegBtnToRight",{maskNrrdMeshes:originAllMeshes[1],maskSlices:originAllSlices[1], url:urls[1], register:state.showRegisterImages})
           return;
         }
 
@@ -616,18 +653,22 @@ function setUpGuiAfterLoading(){
         if(!(!!originUrls.value?.nrrdUrls&&originUrls.value?.nrrdUrls.length>0)) await getOriginNrrdUrls(reQuestInfo.name);
         if(!!originUrls.value?.nrrdUrls&&originUrls.value?.nrrdUrls.length>0){
           urls = originUrls.value.nrrdUrls;
-          readyToLoad(urls);
+          readyToLoad(urls, "origin")?.then((data)=>{
+            emitter.emit("showRegBtnToRight",{maskNrrdMeshes:data.meshes[1], maskSlices:data.slices[1],url:urls[1],register:state.showRegisterImages})
+          });
         }
         
       }else{        
         if(defaultRegAllSlices.length>0){
           allSlices = [...defaultRegAllSlices];
+          allLoadedMeshes = [...defaultRegAllMeshes];
+          emitter.emit("showRegBtnToRight",{maskNrrdMeshes:defaultRegAllMeshes[1],maskSlices:defaultRegAllSlices[1], url:urls[1], register:state.showRegisterImages})
           filesCount.value = 5;
           return;
         }
         if (caseUrls.value) {
           urls = caseUrls.value.nrrdUrls;
-          readyToLoad(urls);
+          readyToLoad(urls, "registration");
         }
       }
   })

@@ -49,7 +49,7 @@ const closeDialog = (e: MouseEvent) => {
       const url = URL.createObjectURL(file);
       urls.push(url);
     });
-    emit("getLoadFilesUrls", urls);
+    emit("getLoadFilesUrls", urls, "uploadFiles");
     emit("onCloseDialog", false);
     loadedFiles = true;
     resetLoadState();

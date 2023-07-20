@@ -1,4 +1,4 @@
-import { type } from "os";
+import * as Copper from "copper3d";
 
 export interface INrrdCaseNames {
   names: string[];
@@ -67,11 +67,32 @@ export interface ILoadUrls {
 
 export interface ICaseDetails{
   currentCaseId:string;
-  details:Array<IDetails>
+  details:Array<IDetails>;
+  maskNrrd:string
 }
 
 export interface IRegRquest{
   name:string,
   radius?: number,
   origin?: number[]
+}
+
+export interface ILoadedMeshes{
+  x:THREE.Mesh;
+  y:THREE.Mesh;
+  z:THREE.Mesh;
+  order:number;
+}
+
+export interface ISliceIndex {
+  x:number;
+  y:number;
+  z:number;
+}
+
+export interface ILeftRightData{
+  maskNrrdMeshes:Copper.nrrdMeshesType; 
+  maskSlices:Copper.nrrdSliceType; 
+  url:string;
+  register:boolean;
 }
