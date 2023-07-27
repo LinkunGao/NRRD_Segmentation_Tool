@@ -531,7 +531,7 @@ const loadAllNrrds = (urls: Array<string>, name:string, resolve?:(value: {meshes
         allSlices.push(newNrrdSlice);
         allLoadedMeshes.push(newNrrdMesh);
         filesCount.value += 1;
-        if(filesCount.value>=5){
+        if(filesCount.value>=urls.length){
           allLoadedMeshes.sort((a: any, b: any) => {
             return a.order - b.order;
           });

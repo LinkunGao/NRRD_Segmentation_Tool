@@ -1,11 +1,13 @@
 <template>
   <div class="nav">
-    <div class="content">
+    <div class="content" id="left_nav_bar" >
       <el-slider
         v-model="sliceNum"
         :max="p.max"
         @input="onChangeSlider"
+        @click.stop
         show-input
+        id="left_nav_slider"
       />
       <div class="arrows">
         <!-- <span @click="onMagnificationClick(0.2)"
@@ -93,6 +95,7 @@ const onSave = () => {
 const openDialog = () => {
   emit("onOpenDialog", true);
 };
+
 
 const onSwitchSliceOrientation = (axis: string) => {
   isAxis = true;

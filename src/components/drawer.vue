@@ -1,5 +1,5 @@
 <template>
-  <div class="wrap" ref="container">
+  <div class="wrap" ref="container" id="right_drawer">
     <div class="nav">
       <div class="menu">
         <div v-for="item in viewData" class="item" @click.stop="onSigleClick(item.label)" @dblclick.stop="onDoubleClick(item.label)">
