@@ -1,10 +1,10 @@
 <template>
   <div class="split-container" ref="splitContainer">
-    <div class="box left" ref="left_container" @dblclick="togglePanelActive('left')">
+    <div class="box left" ref="left_container" @dblclick.stop="togglePanelActive('left', $event)">
       <LeftPanel />
     </div>
     <div class="split-bar" ref="splitBar"></div>
-    <div class="box right" ref="right_container" @dblclick="togglePanelActive('right')">
+    <div class="box right" ref="right_container" @dblclick.stop="togglePanelActive('right',  $event)">
       <RightPanel />
     </div>
     <Logo />
@@ -24,6 +24,7 @@ const splitBar = ref<HTMLDivElement>();
 const left_container = ref<HTMLDivElement>();
 const right_container = ref<HTMLDivElement>();
 let leftFullScreen = false;
+const ignoreElements = ['INPUT', "I", "svg", "path"];
 
 let isDragging = false;
 onMounted(() => {
@@ -59,8 +60,10 @@ onMounted(() => {
 
 });
 
-function togglePanelActive(panel:string){
-  
+function togglePanelActive(panel:string, e:MouseEvent){
+
+ const nodeName = (e.target as HTMLElement).nodeName;
+ if(ignoreElements.includes(nodeName)) return;
   switch (panel) {
     case "left":
       left_container.value?.classList.toggle("panel_active");

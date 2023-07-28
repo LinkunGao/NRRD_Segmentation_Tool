@@ -291,6 +291,7 @@ function loadNrrd(url: string,url_1:string, c_gui: any) {
   registrationSlices = undefined;
   originSlices = undefined;
 
+  // remove GUI
   const opts: Copper.optsType = {
     openGui: false,
     // container: c_gui,
@@ -302,6 +303,11 @@ function loadNrrd(url: string,url_1:string, c_gui: any) {
     nrrdSlices: Copper.nrrdSliceType,
     gui?: GUI
   ) => {
+
+      // volume.windowHigh = 2000;
+      // volume.windowLow = 82;
+      // volume.repaintAllSlices();
+
 
       const origin = volume.header.space_origin.map((num:any)=>Number(num));
       const spacing = volume.spacing;
