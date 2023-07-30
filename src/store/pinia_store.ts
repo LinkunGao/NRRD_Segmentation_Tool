@@ -11,7 +11,8 @@ import {
   useMaskObjMesh,
   useClearMaskMesh,
   useNrrdRegisterCase,
-  useNrrdOriginCase
+  useNrrdOriginCase,
+  useNipplePointsJson,
 } from "@/utils/api";
 import {
   INrrdCaseNames,
@@ -22,8 +23,8 @@ import {
   IReplaceMask,
   IMaskMesh,
   IRegRquest,
+  INipplePoints
 } from "@/models/dataType";
-import { type } from "os";
 
 export const useFileCountStore = defineStore("filesCount", () => {
   const cases = ref<INrrdCaseNames>();
@@ -89,7 +90,6 @@ export const useReplaceMarksStore = defineStore("replaceMask", () => {
   const sendReplaceMask = async (body: IReplaceMask) => {
     success.value = await useReplaceMask(body);
   };
-
   return {
     success,
     sendReplaceMask,
@@ -117,6 +117,17 @@ export const useMaskStore = defineStore("getMasks", () => {
     getMaskDataBackend,
   };
 });
+
+export const useNipplePointsStore = defineStore("getNipplePoints",()=>{
+  const nipplePoints = ref<INipplePoints|Boolean>();
+  const getNipplePoints =async (name:string) => {
+    nipplePoints.value = (await useNipplePointsJson(name)) as INipplePoints|boolean;
+  };
+  return {
+    nipplePoints,
+    getNipplePoints,
+  }
+})
 
 export const useMaskNrrdStore = defineStore("getMaskNrrd",()=>{
   const maskNrrd = ref<string>();
