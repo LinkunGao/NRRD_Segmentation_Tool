@@ -118,6 +118,19 @@ export async function useMask(name: string) {
   });
 }
 
+export async function useNipplePointsJson(name: string) {
+  return new Promise((resolve, reject) => {
+    http
+      .get("/nipple_points", { name })
+      .then((data) => {
+        resolve(data)
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
+}
+
 export async function useMaskNrrd(name: string) {
   return new Promise((resolve, reject) => {
     http
