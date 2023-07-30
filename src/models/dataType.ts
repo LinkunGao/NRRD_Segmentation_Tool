@@ -96,3 +96,11 @@ export interface ILeftRightData{
   url:string;
   register:boolean;
 }
+
+export interface INipplePoints{
+  nodes: {
+    right_nipple: number[],
+    left_nipple: number[]
+  },
+  elements: {}
+}
