@@ -43,7 +43,7 @@ import NavBar from "@/components/NavBar.vue";
 import Upload from "@/components/Upload.vue";
 import { onMounted, ref, watchEffect } from "vue";
 import { storeToRefs } from "pinia";
-import { IStoredMasks, IReplaceMask, ILoadUrls, IRegRquest,ILoadedMeshes } from "@/models/dataType";
+import { IStoredMasks, IReplaceMask, ILoadUrls, IRegRquest,ILoadedMeshes, IRequests,ICaseUrls,IDetails } from "@/models/dataType";
 import {addNameToLoadedMeshes} from "./utils-left";
 import {
   useFileCountStore,
@@ -54,7 +54,8 @@ import {
   useMaskStore,
   useClearMaskMeshStore,
   useRegNrrdUrlsStore,
-  useOriginNrrdUrlsStore
+  useOriginNrrdUrlsStore,
+  useNrrdCaseFileUrlsWithOrderStore,
 } from "@/store/pinia_store";
 import { findCurrentCase, revokeAppUrls, revokeRegisterNrrdImages, getEraserUrlsForOffLine } from "../../tools";
 import emitter from "@/utils/bus";
@@ -127,18 +128,21 @@ let toolsState:any
 
 const { cases } = storeToRefs(useFileCountStore());
 const { getFilesNames } = useFileCountStore();
-const { caseUrls } = storeToRefs(useNrrdCaseUrlsStore());
-const { getCaseFileUrls } = useNrrdCaseUrlsStore();
+// const { caseUrls } = storeToRefs(useNrrdCaseUrlsStore());
+// const { getCaseFileUrls } = useNrrdCaseUrlsStore();
 // const { regUrls } = storeToRefs(useRegNrrdUrlsStore());
 // const { getRegNrrdUrls } = useRegNrrdUrlsStore();
-const { originUrls } = storeToRefs(useOriginNrrdUrlsStore());
-const { getOriginNrrdUrls } = useOriginNrrdUrlsStore();
+// const { originUrls } = storeToRefs(useOriginNrrdUrlsStore());
+// const { getOriginNrrdUrls } = useOriginNrrdUrlsStore();
 const { sendInitMask } = useInitMarksStore();
 const { sendReplaceMask } = useReplaceMarksStore();
 const { sendSaveMask } = useSaveMasksStore();
 const { maskBackend } = storeToRefs(useMaskStore());
 const { getMaskDataBackend } = useMaskStore();
 const { clearMaskMeshObj } = useClearMaskMeshStore();
+const { getNrrdAndJsonFileUrls } = useNrrdCaseFileUrlsWithOrderStore();
+const { caseUrls} = storeToRefs(useNrrdCaseFileUrlsWithOrderStore())
+let originUrls= ref<ICaseUrls>({ nrrdUrls: [], jsonUrl: "" });
 // web worker for send masks to backend
 const worker = new Worker(new URL("../../../utils/worker.ts", import.meta.url), {
   type: "module",
@@ -479,8 +483,12 @@ async function loadModel(name: string) {
         switchAnimationStatus("flex", "Prepare Nrrd files, please wait......");
         currentCaseId = cases.value?.names[0];
         const details = cases.value?.details
+       
+        const requests = findRequestUrls(details,currentCaseId, "registration")
         
-        await getCaseFileUrls(cases.value?.names[0]);
+        await getNrrdAndJsonFileUrls(requests)
+
+        // await getCaseFileUrls(cases.value?.names[0]);
         if (caseUrls.value) {
           urls = caseUrls.value.nrrdUrls;
           // every time switch cases, we store it
@@ -491,6 +499,36 @@ async function loadModel(name: string) {
       }
     }
   }
+}
+
+const findRequestUrls= (details:Array<IDetails>, caseId:string, type:"registration"|"origin")=>{
+  const currentCaseDetails = details.filter((item)=>item.name===caseId)[0];
+  const requests:Array<IRequests> = []
+  if(type==="registration"){
+    currentCaseDetails.file_paths.registration_nrrd_paths.forEach(filepath=>{
+    requests.push({
+      url: "/single-file",
+      params: {path:filepath}
+    })
+   })
+  }else if(type==="origin"){
+    currentCaseDetails.file_paths.origin_nrrd_paths.forEach(filepath=>{
+    requests.push({
+      url: "/single-file",
+      params: {path:filepath}
+    })
+   })
+  }
+ 
+  if(currentCaseDetails.masked){
+    currentCaseDetails.file_paths.segmentation_manual_mask_paths.forEach(filepath=>{
+      requests.push({
+      url: "/single-file",
+      params: {path:filepath}
+    })
+    })
+  }
+  return requests
 }
 
 const loadAllNrrds = (urls: Array<string>, name:string, resolve?:(value: {meshes:Array<Copper.nrrdMeshesType>,slices:any[]}) => void, reject?:(reason?: any) => void) => {
@@ -559,7 +597,7 @@ function setupGui() {
 
   gui
     .add(state, "switchCase", cases.value?.names as string[])
-    .onChange(async (value) => {
+    .onChange(async (caseId) => {
       switchAnimationStatus("flex", "Saving masks data, please wait......");
       // revoke the regsiter images
       if(!!originUrls.value&&originUrls.value.nrrdUrls.length>0){
@@ -574,24 +612,27 @@ function setupGui() {
       revokeAppUrls(loadedUrls);
       loadedUrls = {};
 
-      currentCaseId = value;
+      currentCaseId = caseId;
       await getInitData();
       
-      if (loadedUrls[value]) {
+      if (loadedUrls[caseId]) {
         switchAnimationStatus(
           "flex",
           "Prepare and Loading masks data, please wait......"
         );
-        URL.revokeObjectURL(loadedUrls[value].jsonUrl);
-        await getMaskDataBackend(value);
-        loadedUrls[value].jsonUrl = maskBackend.value;
-        urls = loadedUrls[value].nrrdUrls;
+        URL.revokeObjectURL(loadedUrls[caseId].jsonUrl);
+        await getMaskDataBackend(caseId);
+        loadedUrls[caseId].jsonUrl = maskBackend.value;
+        urls = loadedUrls[caseId].nrrdUrls;
         if(!!caseUrls.value){
           caseUrls.value.nrrdUrls = urls
         }
       } else {
         switchAnimationStatus("flex", "Prepare Nrrd files, please wait......");
-        await getCaseFileUrls(value);
+        // await getCaseFileUrls(value);
+        
+        const requests = findRequestUrls(cases.value?.details as Array<IDetails>, currentCaseId, "registration")
+        await getNrrdAndJsonFileUrls(requests)
         
         if (!!caseUrls.value) {
           urls = caseUrls.value.nrrdUrls;
@@ -650,7 +691,11 @@ function setUpGuiAfterLoading(){
           origin: toolsState?.sphereOrigin.z
         }
 
-        if(!(!!originUrls.value?.nrrdUrls&&originUrls.value?.nrrdUrls.length>0)) await getOriginNrrdUrls(reQuestInfo.name);
+        if(!(!!originUrls.value?.nrrdUrls&&originUrls.value?.nrrdUrls.length>0)){
+          const requests = findRequestUrls(cases.value?.details as Array<IDetails>, reQuestInfo.name, "origin")
+          await getNrrdAndJsonFileUrls(requests)
+          originUrls.value = caseUrls.value as ICaseUrls
+        } 
         if(!!originUrls.value?.nrrdUrls&&originUrls.value?.nrrdUrls.length>0){
           urls = originUrls.value.nrrdUrls;
           readyToLoad(urls, "origin")?.then((data)=>{
