@@ -13,6 +13,7 @@ import {
   useNrrdRegisterCase,
   useNrrdOriginCase,
   useNipplePointsJson,
+  useNrrdCaseFiles
 } from "@/utils/api";
 import {
   INrrdCaseNames,
@@ -23,7 +24,8 @@ import {
   IReplaceMask,
   IMaskMesh,
   IRegRquest,
-  INipplePoints
+  INipplePoints,
+  IRequests,
 } from "@/models/dataType";
 
 export const useFileCountStore = defineStore("filesCount", () => {
@@ -36,6 +38,17 @@ export const useFileCountStore = defineStore("filesCount", () => {
     getFilesNames,
   };
 });
+
+export const useNrrdCaseFileUrlsWithOrderStore = defineStore("getCaseFileUrlOrdered", ()=>{
+  const caseUrls = ref<ICaseUrls>();
+  const getNrrdAndJsonFileUrls = async (requests:Array<IRequests>) => {
+    caseUrls.value = await useNrrdCaseFiles(requests);
+  }
+  return {
+    caseUrls,
+    getNrrdAndJsonFileUrls
+  }
+})
 
 export const useNrrdCaseUrlsStore = defineStore("getCaseFiles", () => {
   const caseUrls = ref<ICaseUrls>();

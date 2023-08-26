@@ -1,6 +1,9 @@
 import axios, { type AxiosRequestConfig } from "axios";
+import {IRequests} from '@/models/dataType';
 
 const Base_URL = `http://127.0.0.1:8000/api`;
+const maxRetries = 3;
+const retryDelay = 1000;
 axios.defaults.baseURL = Base_URL;
 
 axios.interceptors.request.use((config: AxiosRequestConfig | any) => config);
@@ -19,6 +22,7 @@ interface IHttp {
   get<T>(url: string, params?: unknown): Promise<T>;
   post<T>(url: string, body?: unknown): Promise<T>;
   getBlob<T>(url: string, params?: unknown): Promise<T>;
+  all<T>(requests:Array<IRequests>): Promise<T>;
 }
 
 const http: IHttp = {
@@ -47,7 +51,7 @@ const http: IHttp = {
           }else{
             resolve(res.data);
           }
-          
+
         })
         .catch((err) => {
           reject(err);
@@ -65,6 +69,44 @@ const http: IHttp = {
           reject(err);
         });
     });
+  },
+  all(requests){
+    return new Promise((resolve, reject)=>{
+      const requestWithRetry = async (request:IRequests) => {
+        let retries = 0;
+      
+        while (retries < maxRetries) {
+          try {
+            const response = await axios.get(request.url, {params:request.params, responseType: 'blob' });
+            // return response.data;
+            const x_header_str = response.headers["x-file-name"]
+            
+            if (!!x_header_str){
+              const filename = x_header_str
+              return Object.assign({data:response.data, filename});
+            }else{
+              return response.data
+            }
+          } catch (error) {
+            retries++;
+            console.log(`Retrying ${request.url} (attempt ${retries})...`);
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+          }
+        }
+      
+        throw new Error(`All retry attempts for ${request.url} failed`);
+      };
+      
+      const retryableRequests = requests.map(request => requestWithRetry(request));
+      Promise
+        .all(retryableRequests)
+        .then(results => {
+          resolve(results as any)
+        })
+        .catch(error => {
+          reject(error)
+        });
+    })
   },
 };
 
