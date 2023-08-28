@@ -10,6 +10,13 @@ export interface IDetails {
   name: string;
   masked: false;
   has_mesh:boolean;
+  file_paths: {
+    origin_nrrd_paths: string[];
+    registration_nrrd_paths: string[];
+    segmentation_nipple_paths: string[];
+    segmentation_manual_mask_paths: string[];
+    segmentation_manual_3dobj_paths: string[];
+  }
 }
 
 export interface IStoredMasks{
@@ -95,4 +102,17 @@ export interface ILeftRightData{
   maskSlices:Copper.nrrdSliceType; 
   url:string;
   register:boolean;
+}
+
+export interface INipplePoints{
+  nodes: {
+    right_nipple: number[],
+    left_nipple: number[]
+  },
+  elements: {}
+}
+
+export interface IRequests{
+  url:string;
+  params:any;
 }

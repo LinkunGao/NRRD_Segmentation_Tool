@@ -28,12 +28,14 @@ import emitter from "@/utils/bus";
 import { storeToRefs } from "pinia";
 import {
   useMaskNrrdStore,
-  useMaskMeshObjStore
+  useMaskMeshObjStore,
+  useNipplePointsStore
 } from "@/store/pinia_store";
 import {
   ICaseDetails,
   ISliceIndex,
-  ILeftRightData
+  ILeftRightData,
+  INipplePoints
 } from "@/models/dataType"
 import {findCurrentCase, transformMeshPointToImageSpace,getClosestNipple} from "../../tools";
 import {PanelOperationManager, valideClock, deepClone} from "./utils-right";
@@ -91,6 +93,8 @@ const { maskNrrd } = storeToRefs(useMaskNrrdStore());
 const { getMaskNrrd } = useMaskNrrdStore();
 const { maskMeshObj } = storeToRefs(useMaskMeshObjStore());
 const { getMaskMeshObj } = useMaskMeshObjStore();
+const {nipplePoints} = storeToRefs(useNipplePointsStore());
+const {getNipplePoints} = useNipplePointsStore();
 
 onMounted(() => {
   let { $refs } = (getCurrentInstance() as any).proxy;
@@ -297,7 +301,7 @@ function loadNrrd(url: string,url_1:string, c_gui: any) {
     // container: c_gui,
   };
   if (!!copperScene) {
-    const nrrdCallback = (
+    const nrrdCallback = async (
     volume: any,
     nrrdMesh: Copper.nrrdMeshesType,
     nrrdSlices: Copper.nrrdSliceType,
@@ -335,6 +339,7 @@ function loadNrrd(url: string,url_1:string, c_gui: any) {
       allRightPanelMeshes.push(nrrdMesh.x,nrrdMesh.y,nrrdMesh.z)
       copperScene.controls.rotateSpeed = 3.5;
       copperScene.controls.panSpeed = 0.5;
+      
   
       if(url_1){
         copperScene.loadOBJ(url_1, (content)=>{
@@ -366,8 +371,6 @@ function loadNrrd(url: string,url_1:string, c_gui: any) {
       }else{
         loadBreastModel(gui as GUI, origin, spacing,dimensions,bias)
       }
-      
-      
     };
 
     (copperScene as Copper.copperScene).loadNrrd(url, loadBar1, true, nrrdCallback, opts);
@@ -376,62 +379,55 @@ function loadNrrd(url: string,url_1:string, c_gui: any) {
 
 
 
-function loadBreastModel(guiControl:GUI, origin:number[], spacing:number[],dimensions:number[],bias:THREE.Vector3, tumourCenter?:THREE.Vector3,nrrdMesh?: Copper.nrrdMeshesType){
+async function loadBreastModel(guiControl:GUI, origin:number[], spacing:number[],dimensions:number[],bias:THREE.Vector3, tumourCenter?:THREE.Vector3,nrrdMesh?: Copper.nrrdMeshesType){
   const geometryR = new THREE.SphereGeometry(5, 32, 16);
   const geometryL = new THREE.SphereGeometry(5, 32, 16);
   const material = new THREE.MeshBasicMaterial({color:"hotpink"});
   const sphereL = new THREE.Mesh(geometryL, material);
   const sphereR = new THREE.Mesh(geometryR, material);
-  
 
-    // 12
-//  todo load nipple data
-  const l =[
-              76.14583587646484,
-              80.57292175292969,
-              68.90000152587
-    ]
-  const r =  [
-            93.85417175292969,
-            257.65625,
-            57.20000457763672
-        ];
-  const nipplesPos = [l,r];   
+   //  todo load nipple data
+  await getNipplePoints(casename)
+  const nippleResult = !!nipplePoints.value
+      
+  if(nippleResult){
+      const nipples = nipplePoints.value as INipplePoints
+      const l =nipples.nodes.left_nipple;
+            const r =  nipples.nodes.right_nipple;
+            const nipplesPos = [l,r];   
+            
+            nippleTl = transformMeshPointToImageSpace(nipplesPos[0], origin, spacing, dimensions, bias);
+            nippleTr = transformMeshPointToImageSpace(nipplesPos[1], origin, spacing, dimensions, bias);
+        
+        if(!!tumourCenter){
+          // const nippleTree = createKDTree(nipplesPos);
+          // const idx = nippleTree.nn([tumourCenter.x,tumourCenter.y,tumourCenter.z])
+          // console.log(idx);
+          const nippleLeft = new THREE.Vector3(nippleTl[0],nippleTl[1],nippleTl[2]);
+          const nippleRight = new THREE.Vector3(nippleTr[0],nippleTr[1],nippleTr[2]);
+          const clockInfo =  getClosestNipple(nippleLeft,nippleRight,tumourCenter);
+          
+          nippleDist.value = clockInfo.dist;
+          console.log( clockInfo.radial_distance, nippleCentralLimit);
+          
+          if(clockInfo.radial_distance < nippleCentralLimit){
+            nippleClock.value = "central";
+          }else{
+            nippleClock.value = "@ "+ clockInfo.timeStr
+          }
+        }
 
+        
+        // valide(tl,tr,nrrdMesh)
+        sphereL.position.set( nippleTl[0], nippleTl[1], nippleTl[2]);
+        sphereR.position.set( nippleTr[0], nippleTr[1], nippleTr[2]);
 
-  
-  nippleTl = transformMeshPointToImageSpace(nipplesPos[0], origin, spacing, dimensions, bias);
-  nippleTr = transformMeshPointToImageSpace(nipplesPos[1], origin, spacing, dimensions, bias);
+        copperScene.addObject(sphereR)
+        copperScene.addObject(sphereL)
 
-  
-  if(!!tumourCenter){
-    // const nippleTree = createKDTree(nipplesPos);
-    // const idx = nippleTree.nn([tumourCenter.x,tumourCenter.y,tumourCenter.z])
-    // console.log(idx);
-    const nippleLeft = new THREE.Vector3(nippleTl[0],nippleTl[1],nippleTl[2]);
-    const nippleRight = new THREE.Vector3(nippleTr[0],nippleTr[1],nippleTr[2]);
-    const clockInfo =  getClosestNipple(nippleLeft,nippleRight,tumourCenter);
-    
-    nippleDist.value = clockInfo.dist;
-    console.log( clockInfo.radial_distance, nippleCentralLimit);
-    
-    if(clockInfo.radial_distance < nippleCentralLimit){
-      nippleClock.value = "central";
-    }else{
-      nippleClock.value = "@ "+ clockInfo.timeStr
-    }
-  }
-
-  
-  // valide(tl,tr,nrrdMesh)
-  sphereL.position.set( nippleTl[0], nippleTl[1], nippleTl[2]);
-  sphereR.position.set( nippleTr[0], nippleTr[1], nippleTr[2]);
-
-  copperScene.addObject(sphereR)
-  copperScene.addObject(sphereL)
-
-  allRightPanelMeshes.push(sphereL)
-  allRightPanelMeshes.push(sphereR)
+        allRightPanelMeshes.push(sphereL)
+        allRightPanelMeshes.push(sphereR)
+  } 
 }
 
 function removeOldMeshes(meshSet:THREE.Object3D<THREE.Event>[]){
@@ -459,7 +455,7 @@ const resetSliceIndex = (sliceIndex:ISliceIndex) => {
 }
 
 const resetNrrdImage = ()=>{
-  // panelOperator.dispose();
+  panelOperator.dispose();
   copperScene.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view.json");
   loadNrrdMeshes.x.visible = true;
   loadNrrdMeshes.y.visible = true;
@@ -473,8 +469,8 @@ const resetNrrdImage = ()=>{
 
 
 const handleViewSigleClick = (view:string)=>{
-  // panelOperator.start()
-  // copperScene.controls.mouseButtons.LEFT = -1;
+  panelOperator.start()
+  copperScene.controls.mouseButtons.LEFT = -1;
   clickCount ++;
   if(clickCount===1){
     clickTimer = setTimeout(()=>{
@@ -483,19 +479,19 @@ const handleViewSigleClick = (view:string)=>{
           loadNrrdMeshes.x.visible = true;
           loadNrrdMeshes.y.visible = false;
           loadNrrdMeshes.z.visible = false;
-          // panelOperator.setSlicePrams(loadNrrdSlices.x);
+          panelOperator.setSlicePrams(loadNrrdSlices.x);
           break;
         case "axial":
           loadNrrdMeshes.x.visible = false;
           loadNrrdMeshes.y.visible = false;
           loadNrrdMeshes.z.visible = true;
-          // panelOperator.setSlicePrams(loadNrrdSlices.z);
+          panelOperator.setSlicePrams(loadNrrdSlices.z);
           break;
         case "coronal":
           loadNrrdMeshes.x.visible = false;
           loadNrrdMeshes.y.visible = true;
           loadNrrdMeshes.z.visible = false;
-          // panelOperator.setSlicePrams(loadNrrdSlices.y);
+          panelOperator.setSlicePrams(loadNrrdSlices.y);
           break;
         case "clock":
           validFlag = !validFlag;
@@ -514,14 +510,14 @@ const handleViewSigleClick = (view:string)=>{
 const handleViewsDoubleClick = (view:string)=>{
   !!clickTimer && clearTimeout(clickTimer);
   clickCount = 0;
-  // copperScene.controls.mouseButtons.LEFT = -1;
+  copperScene.controls.mouseButtons.LEFT = -1;
   copperScene.controls.reset();
   switch (view) {
     case "sagittal":
       loadNrrdMeshes.x.visible = true;
       loadNrrdMeshes.y.visible = false;
       loadNrrdMeshes.z.visible = false;
-      // panelOperator.setSlicePrams(loadNrrdSlices.x);
+      panelOperator.setSlicePrams(loadNrrdSlices.x);
       copperScene.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view_sagittal.json");
       break;
     
@@ -529,7 +525,7 @@ const handleViewsDoubleClick = (view:string)=>{
       loadNrrdMeshes.x.visible = false;
       loadNrrdMeshes.y.visible = false;
       loadNrrdMeshes.z.visible = true;
-      // panelOperator.setSlicePrams(loadNrrdSlices.z);
+      panelOperator.setSlicePrams(loadNrrdSlices.z);
       copperScene.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view.json");
       break;
   
@@ -537,7 +533,7 @@ const handleViewsDoubleClick = (view:string)=>{
       loadNrrdMeshes.x.visible = false;
       loadNrrdMeshes.y.visible = true;
       loadNrrdMeshes.z.visible = false;
-      // panelOperator.setSlicePrams(loadNrrdSlices.y);
+      panelOperator.setSlicePrams(loadNrrdSlices.y);
       copperScene.loadViewUrl("/NRRD_Segmentation_Tool/nrrd_view_coronal.json");
       break;
   } 
