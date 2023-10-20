@@ -13,7 +13,8 @@ import {
   useNrrdRegisterCase,
   useNrrdOriginCase,
   useNipplePointsJson,
-  useNrrdCaseFiles
+  useNrrdCaseFiles, 
+  useSaveSphere
 } from "@/utils/api";
 import {
   INrrdCaseNames,
@@ -22,6 +23,7 @@ import {
   ICaseRegUrls,
   IExportMasks,
   IReplaceMask,
+  ISaveSphere,
   IMaskMesh,
   IRegRquest,
   INipplePoints,
@@ -88,7 +90,7 @@ export const useOriginNrrdUrlsStore = defineStore("getOriginNrrdFiles", () => {
 
 export const useInitMarksStore = defineStore("initMasks", () => {
   const success = ref<boolean>(false);
-  const sendInitMask = async (body: IExportMasks) => {
+  const sendInitMask = async (body: IExportMasks) => {    
     success.value = await useInitMasks(body);
   };
 
@@ -106,6 +108,17 @@ export const useReplaceMarksStore = defineStore("replaceMask", () => {
   return {
     success,
     sendReplaceMask,
+  };
+});
+
+export const useSaveSphereStore = defineStore("saveSphere", () => {
+  const success = ref<boolean>(false);
+  const sendSaveSphere= async (body: ISaveSphere) => {
+    success.value = await useSaveSphere(body);
+  };
+  return {
+    success,
+    sendSaveSphere,
   };
 });
 

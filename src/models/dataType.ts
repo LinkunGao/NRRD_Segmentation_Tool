@@ -50,6 +50,13 @@ export interface IReplaceMask {
   mask: number[];
 }
 
+export interface ISaveSphere {
+  caseId: string;
+  sliceId: number;
+  sphereRadiusMM: number
+  sphereOriginMM: number[]
+}
+
 export interface IMaskMesh {
   maskMeshObjUrl?: string;
   meshVolume?:number;

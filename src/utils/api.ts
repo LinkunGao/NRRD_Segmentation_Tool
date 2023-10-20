@@ -6,10 +6,10 @@ import {
   ICaseRegUrls,
   IExportMasks,
   IReplaceMask,
+  ISaveSphere,
   IRegRquest,
   IRequests,
 } from "@/models/dataType";
-import { error } from "console";
 import JSZip from "jszip";
 
 /**
@@ -117,6 +117,16 @@ export async function useReplaceMask(body: IReplaceMask) {
 }
 
 /**
+ * sava sphere origin and raduis in mm
+ * @param body
+ * @returns
+ */
+export async function useSaveSphere(body: ISaveSphere) {
+  const success = http.post<boolean>("/sphere/save", body);
+  return success;
+}
+
+/**
  * Save mask
  * @returns
  */
@@ -172,7 +182,7 @@ export async function useMaskNrrd(name: string) {
 }
 
 export async function useMaskObjMesh(name: string) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {    
     http
       .getBlob("/mesh", { name })
       .then((res) => {
