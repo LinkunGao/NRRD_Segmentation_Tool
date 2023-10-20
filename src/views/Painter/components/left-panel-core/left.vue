@@ -43,13 +43,14 @@ import NavBar from "@/components/NavBar.vue";
 import Upload from "@/components/Upload.vue";
 import { onMounted, ref, watchEffect } from "vue";
 import { storeToRefs } from "pinia";
-import { IStoredMasks, IReplaceMask, ILoadUrls, IRegRquest,ILoadedMeshes, IRequests,ICaseUrls,IDetails } from "@/models/dataType";
+import { IStoredMasks, IReplaceMask,ISaveSphere, ILoadUrls, IRegRquest,ILoadedMeshes, IRequests,ICaseUrls,IDetails } from "@/models/dataType";
 import {addNameToLoadedMeshes} from "./utils-left";
 import {
   useFileCountStore,
   useNrrdCaseUrlsStore,
   useInitMarksStore,
   useReplaceMarksStore,
+  useSaveSphereStore,
   useSaveMasksStore,
   useMaskStore,
   useClearMaskMeshStore,
@@ -57,7 +58,8 @@ import {
   useOriginNrrdUrlsStore,
   useNrrdCaseFileUrlsWithOrderStore,
 } from "@/store/pinia_store";
-import { findCurrentCase, revokeAppUrls, revokeRegisterNrrdImages, getEraserUrlsForOffLine } from "../../tools";
+import { findCurrentCase, revokeAppUrls, revokeRegisterNrrdImages, getEraserUrlsForOffLine, getCursorUrlsForOffLine } from "../../tools";
+import {convertInitMaskData} from "@/utils/worker"
 import emitter from "@/utils/bus";
 
 
@@ -136,6 +138,7 @@ const { getFilesNames } = useFileCountStore();
 // const { getOriginNrrdUrls } = useOriginNrrdUrlsStore();
 const { sendInitMask } = useInitMarksStore();
 const { sendReplaceMask } = useReplaceMarksStore();
+const { sendSaveSphere } = useSaveSphereStore();
 const { sendSaveMask } = useSaveMasksStore();
 const { maskBackend } = storeToRefs(useMaskStore());
 const { getMaskDataBackend } = useMaskStore();
@@ -144,11 +147,12 @@ const { getNrrdAndJsonFileUrls } = useNrrdCaseFileUrlsWithOrderStore();
 const { caseUrls} = storeToRefs(useNrrdCaseFileUrlsWithOrderStore())
 let originUrls= ref<ICaseUrls>({ nrrdUrls: [], jsonUrl: "" });
 // web worker for send masks to backend
-const worker = new Worker(new URL("../../../utils/worker.ts", import.meta.url), {
-  type: "module",
-});
+// const worker = new Worker(new URL("../../../../../utils/worker.ts", import.meta.url), {
+//   type: "module",
+// });
 
 const eraserUrls = getEraserUrlsForOffLine();
+const cursorUrls = getCursorUrlsForOffLine();
 
 onMounted(async () => {
   await getInitData();
@@ -161,6 +165,7 @@ onMounted(async () => {
   // for offline working
   
   nrrdTools.setEraserUrls(eraserUrls);
+  nrrdTools.setPencilIconUrls(cursorUrls);
 
   // sphere plan b
   toolsState = nrrdTools.getNrrdToolsSettings()
@@ -238,22 +243,8 @@ const resetMainAreaSize = (factor: number) => {
   nrrdTools.setMainAreaSize(factor);
 };
 
-worker.onmessage = async function (ev: MessageEvent) {
-  
-  const result = ev.data;
-  const body = {
-    caseId: currentCaseId,
-    masks: result.masks as IStoredMasks,
-  };
-  let start_c: unknown = new Date();
-  await sendInitMask(body);
-  let end_c: unknown = new Date();
-  let timeDiff_c = (end_c as number) - (start_c as number);
-  console.log(`axios send Time taken: ${timeDiff_c}ms`);
-  console.log("send");
-};
 
-const sendInitMaskToBackend = () => {
+const sendInitMaskToBackend = async () => {
   // const masksData = nrrdTools.paintImages.z;
   const masksData = {
     label1: nrrdTools.paintImagesLabel1.z,
@@ -267,8 +258,9 @@ const sendInitMaskToBackend = () => {
   const voxelSpacing = nrrdTools.getVoxelSpacing();
   const spaceOrigin = nrrdTools.getSpaceOrigin();
   
-  if (len > 0) {
-    worker.postMessage({
+
+  if (len > 0) { 
+    const result = convertInitMaskData({
       masksData,
       len,
       width,
@@ -277,6 +269,16 @@ const sendInitMaskToBackend = () => {
       spaceOrigin,
       msg: "init",
     });
+  const body = {
+    caseId: currentCaseId,
+    masks: result.masks as IStoredMasks,
+  };
+  let start_c: unknown = new Date();
+  await sendInitMask(body);
+  let end_c: unknown = new Date();
+  let timeDiff_c = (end_c as number) - (start_c as number);
+  console.log(`axios send Time taken: ${timeDiff_c}ms`);
+  console.log("send");
   }
 };
 
@@ -304,7 +306,7 @@ const loadJsonMasks = (url: string) => {
 };
 
 const setMaskData = () => {
-
+  
   if (loadedUrls[currentCaseId]) {
     if (cases.value) {
       const currentCaseDetail = findCurrentCase(
@@ -325,6 +327,19 @@ const switchAnimationStatus = (status: "flex" | "none", text?: string) => {
   loadingContainer.style.display = status;
   !!text && (progress.innerText = text);
 };
+
+const getSphereData =async ( 
+      sphereOrigin:number[],
+      sphereRadius:number
+      ) => {
+        const sphereData:ISaveSphere = {
+          caseId: currentCaseId,
+          sliceId:sphereOrigin[2],
+          sphereRadiusMM: sphereRadius,
+          sphereOriginMM:sphereOrigin
+        }
+        await sendSaveSphere(sphereData);    
+}
 
 const getMaskData = async (
   image: ImageData,
@@ -399,7 +414,7 @@ watchEffect(() => {
         showNumber: true,
         getSliceNum,
       });
-      nrrdTools.draw(scene as Copper.copperScene, gui, { getMaskData });
+      nrrdTools.draw(scene as Copper.copperScene, gui, { getMaskData, getSphereData });
       scene?.addPreRenderCallbackFunction(nrrdTools.start);
       setUpGuiAfterLoading()
     } else {
@@ -690,6 +705,7 @@ function setUpGuiAfterLoading(){
           radius: toolsState?.sphereRadius,
           origin: toolsState?.sphereOrigin.z
         }
+        
 
         if(!(!!originUrls.value?.nrrdUrls&&originUrls.value?.nrrdUrls.length>0)){
           const requests = findRequestUrls(cases.value?.details as Array<IDetails>, reQuestInfo.name, "origin")

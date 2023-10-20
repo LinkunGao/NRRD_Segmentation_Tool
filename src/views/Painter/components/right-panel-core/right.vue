@@ -22,7 +22,7 @@ import * as Copper from "copper3d";
 import createKDTree from "copper3d-tree";
 import "copper3d/dist/css/style.css";
 // import * as Copper from "@/ts/index"
-import { getCurrentInstance, onMounted, ref } from "vue";
+import { getCurrentInstance, onMounted, ref, onBeforeUnmount } from "vue";
 import Drawer from "@/components/drawer.vue";
 import emitter from "@/utils/bus";
 import { storeToRefs } from "pinia";
@@ -57,6 +57,7 @@ let originMeshes: Copper.nrrdMeshesType|undefined;
 let originSlices: Copper.nrrdSliceType|undefined;
 let copperScene: Copper.copperScene;
 let socket = new WebSocket("ws://127.0.0.1:8000/ws");
+let preObjModelUrl:string|undefined = undefined;
 let loadBarMain: Copper.loadingBarType;
 let loadingContainer: HTMLDivElement;
 let timer:NodeJS.Timer
@@ -113,6 +114,7 @@ onMounted(() => {
   }
   
   socket.onmessage = function (event){
+    
     if(typeof event.data === "string"){
       if(event.data === "delete"){
         volume.value = 0;
@@ -123,14 +125,19 @@ onMounted(() => {
       }
       clearInterval(timer as NodeJS.Timer)
     }else{
-      const blob = new Blob([event.data], {type:"model/obj"})
-      const url = URL.createObjectURL(blob)
+      const blob = new Blob([event.data], {type:"model/obj"});
+      const url = URL.createObjectURL(blob);
       maskMeshObj.value.maskMeshObjUrl = url;
+     
       loadNrrd(maskNrrd.value as string, maskMeshObj.value.maskMeshObjUrl as string, c_gui);
       loadingContainer.style.display = "none";
+
+      if(typeof preObjModelUrl === "string"){
+      URL.revokeObjectURL(preObjModelUrl)
+      preObjModelUrl = url;
+    }
     }
     openLoading.value = false;
-    
   }
 
   appRenderer = new Copper.copperRenderer(bg.value as HTMLDivElement, {guiOpen:false, logarithmicDepthBuffer:true});
@@ -159,10 +166,15 @@ onMounted(() => {
     casename = case_infos.currentCaseId;
     // await getMaskNrrd(casename);
     maskNrrd.value = case_infos.maskNrrd;
+    
     if(case_detail.has_mesh){
       await getMaskMeshObj(casename);
+      
       volume.value = Math.ceil(maskMeshObj.value.meshVolume as number)/1000;
       loadNrrd(maskNrrd.value as string, maskMeshObj.value.maskMeshObjUrl as string, c_gui);
+
+      preObjModelUrl = maskMeshObj.value.maskMeshObjUrl;
+      
       // loadNrrd(maskNrrd.value as string, "/NRRD_Segmentation_Tool/mesh_spacing.obj" as string, c_gui);
     }else{
       loadNrrd(maskNrrd.value as string,"", c_gui);
@@ -239,6 +251,11 @@ onMounted(() => {
   appRenderer.animate();
 });
 
+onBeforeUnmount(()=>{
+  if(typeof preObjModelUrl == "string"){
+        URL.revokeObjectURL(preObjModelUrl)
+      }
+})
 // async function getMaskNrrdHandle() {
 //   if (casename) {
 //     await getMaskNrrd(casename);

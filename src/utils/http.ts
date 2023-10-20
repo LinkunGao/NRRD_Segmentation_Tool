@@ -39,7 +39,7 @@ const http: IHttp = {
     });
   },
   getBlob(url, params) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {      
       axios
         .get(url, { params, responseType: "blob" })
         .then((res) => {
